@@ -2,9 +2,9 @@
 
 契约（ARCHITECTURE §5.3）:
   * 变量名固定一套 ``LLM_*``，不按 provider 分裂（禁止 DEEPSEEK_API_KEY）。
-  * 加载优先级：进程环境变量 > resume-warehouse/.env > 内置默认值。
+  * 加载优先级：进程环境变量 > <repo>/.env > 内置默认值。
   * API key 只以 ``key_set: bool`` 对外暴露；日志/异常/响应一律经 :func:`redact`。
-  * ``DATA_DIR`` 只允许解析到 ``resume-warehouse/data`` 之内，越界即 ConfigError。
+  * ``DATA_DIR`` 只允许解析到 ``<repo>/data`` 之内，越界即 ConfigError。
 
 本模块**不** import Flask，也不发起任何网络请求（出网只有 adapters/llm_client.py）。
 """
@@ -21,8 +21,8 @@ from typing import Any, Mapping
 # 路径常量
 # --------------------------------------------------------------------------------------
 
-SERVER_DIR = Path(__file__).resolve().parent.parent  # resume-warehouse/server
-PROJECT_ROOT = SERVER_DIR.parent  # resume-warehouse
+SERVER_DIR = Path(__file__).resolve().parent.parent  # <repo>/server
+PROJECT_ROOT = SERVER_DIR.parent  # <repo>
 ENV_PATH = PROJECT_ROOT / ".env"
 ENV_EXAMPLE_PATH = PROJECT_ROOT / ".env.example"
 SCHEMA_PATH = Path(__file__).resolve().parent / "schema.sql"
