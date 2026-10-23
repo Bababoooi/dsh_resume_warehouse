@@ -19,7 +19,7 @@
 > 修订记录：**v1.7（2026-10-23）** 新增 **§3.3 `data/runtime/app_port` 契约（D-03 定版）**：格式冻结为 **JSON 五字段** `{port,host,url,pid,started_at}`（允许多键、不许少键）、**原子写入**（`app_port.tmp` + `os.replace`）、消费者一律 `json["port"]`、**禁止 `int(read())` 纯数字解析**（含反向 grep 判据与 url/port 自洽断言）；§3.1/§3.2/D3 同步。
 > 修订记录：**v1.6（2026-10-23）** §3.2 增「`key` 回显红线（一处允许的例外）」——允许回显 SHA-256 前 8 位指纹作身份锚点，禁止任何 key 字符片段（含末四位）。
 > 修订记录：**v1.5（2026-10-23）** 上云边界最终口径（用户 m00265）——**学校名改为真实上云**，撤销 `[SCHOOL]` 占位符，脱敏名单收敛为姓名/电话/邮箱/身份证号，照片结构上不可传；新增 **ADR-18**（保留 ADR-16 以展示决策演进）。
-> 修订记录：**v1.4（2026-10-23）** 一致性收口（captain 裁定）：F4 行改 `LLM_TRUNCATED`(502)、F2 行错误码统一为 `LLM_JSON_MODE_PRECONDITION`、D10 槽位缺失分层、D11 去自造码、`text_verified` 字段名统一、§3.2 补 `scripts/set-api-key.command` 与「不回显 key 任何片段」红线。
+> 修订记录：**v1.4（2026-10-23）** 一致性收口（captain 裁定）：F4 行改 `LLM_TRUNCATED`(502)、F2 行错误码统一为 `LLM_JSON_MODE_PRECONDITION`、D10 槽位缺失分层、D11 去自造码、`text_verified` 字段名统一、§3.2 补 `设置API密钥.command` 与「不回显 key 任何片段」红线。
 > 修订记录：**v1.3（2026-10-23）** 按用户决策「坚持 DeepSeek 路线」——**移除 Ollama**：provider 枚举收敛为 `deepseek | openai_compatible | off`，删 §5.3 的 ollama 预设行、重写 KI-05、新增 ADR-17；`off` 升为「完全不上云」一等开关。
 
 ---
@@ -146,7 +146,7 @@ resume-warehouse/
 ├── .env                        # 机密，chmod 600，永不被读取接口回显
 ├── .env.example                # 仅键名与占位值
 ├── requirements.lock.txt       # 版本清单（自检用，不安装）
-├── scripts/set-api-key.command          # 可选双击入口：把 key 写入 .env（chmod 600）。**只允许回显 key_set=true 或不可逆指纹（SHA-256 前 8 位）**，**禁止输出 key 的任何字符片段（含末四位）**；首行必须 `cd "$(dirname "$0")"`。它不参与服务运行，run.sh 不依赖它
+├── 设置API密钥.command          # 可选双击入口：把 key 写入 .env（chmod 600）。**只允许回显 key_set=true 或不可逆指纹（SHA-256 前 8 位）**，**禁止输出 key 的任何字符片段（含末四位）**；首行必须 `cd "$(dirname "$0")"`。它不参与服务运行，run.sh 不依赖它
 ├── scripts/
 │   ├── run.sh                 # 一键启动（§3.1）：preflight → 端口顺延 → 横幅 → 起服务
 │   ├── preflight.py           # 启动体检：纯本地、不联网，可独立 `python scripts/preflight.py`
@@ -215,7 +215,7 @@ resume-warehouse/
 - **允许**：回显 `key_set=true` 这类布尔事实；回显 key 的**不可逆指纹**（`SHA-256(key)` 前 8 位，例如 `指纹 82be8a4d`）—— 用户填过多把 key 时，这是他唯一能核对「这次填的是不是原来那把」的锚点。
 - **禁止**：输出 key 的任何**字符片段**（含末四位、前缀 `sk-` 之后的部分）、完整长度之外的任何可逆信息、把 key 写进日志/`llm_call_log`/错误消息/HTTP 响应。
 - 判定：指纹**不含 key 任何字符、不可逆、不能用于鉴权**，因此不违反「不回显 key」的本意；而「打码末四位」既泄露 16 bit 又不解决「是哪把 key」的问题，属**禁止**。
-- 可复验：`grep -c '末尾四位' scripts/set-api-key.command` → **0**；`grep -c '指纹' scripts/set-api-key.command` → **≥1**；`grep -Ec 'sk-[A-Za-z0-9]{4,}' scripts/set-api-key.command` → **0**。
+- 可复验：`grep -c '末尾四位' 设置API密钥.command` → **0**；`grep -c '指纹' 设置API密钥.command` → **≥1**；`grep -Ec 'sk-[A-Za-z0-9]{4,}' 设置API密钥.command` → **0**。
 
 **路径禁令（可被验收检查）**
 - 除 `data/` 与 `tests/.tmp/` 外不写任何文件；导出文件绝不写到 `~/Desktop`、`~/Downloads`，除非用户在请求里显式给出**绝对路径**且值为 `data/exports` 之外的目标（此时记录 `EXPORT_OUTSIDE_DATA` 警告到 export 响应）。
@@ -434,7 +434,7 @@ DATA_DIR=./data
 **回填机制**：LLM 输出里会保留 `[NAME]` / `[PHONE]` / `[EMAIL]` / `[ID]` 占位符 → 入库时**原样保存**，只在 `render_html` / `render_pdf` / `render_docx` 生成最终产物时用 profile 真实值替换（同一函数也负责 ATS 文本层）。这样即使日志或产物被复制走，也不会出现姓名 + 联系方式的明文组合（校名可明文）。
 
 **验证方式（三条，缺一不可）**
-1. 单测：把含指纹串（`sample_resume`、手机号、邮箱）的素材灌入库 → 走 `preview` → 断言 `payload` JSON 中不含任何指纹（AC-PRIV-01）。
+1. 单测：把含指纹串（`zhong_xudong`、手机号、邮箱）的素材灌入库 → 走 `preview` → 断言 `payload` JSON 中不含任何指纹（AC-PRIV-01）。
 2. 结构：`llm_client.send()` 只接受 `ConsentGrant` 对象（含 `preview_id` + `payload_sha256`），无法直接传字符串；`llm_payload.build()` 的入参是 `variant_ids` 白名单，不是 `package_id`（避免「取整包」）。
 3. 审计：`data/logs/llm-egress.jsonl` 只记 `field_names[]`，不记正文（AC-PRIV-07）。
 
@@ -509,7 +509,7 @@ _FALLBACKS = [
 - 表格单元格内的富文本必须包 `Paragraph`，否则 `<b>` 原样输出（实测）。
 - 导出前文本净化：`unicodedata.normalize("NFC")`，emoji（`So` 类）→ 替换为 `""` 并写 `warnings[]`；控制字符剔除。
 - A4、页边距 16–18 mm、正文 10.5 pt / 行距 15 pt、二级标题 12 pt 加粗（示例值，模板可覆盖）。
-- **证件照（有照片时）**：右上角**固定 89.3×89.3 pt** 方块（权威值 **89.28×89.28**），左边 `x0=**497.08**`、距页顶 **3.82 pt**、**距页面右缘 9.13 pt**（= `595.5 − 497.08 − 89.28`）
+- **证件照（有照片时）**：右上角方块，**边长 == 标题区实测高度**（= 姓名行 26pt + 2pt + 两行元信息 `2 × body × leading`；11pt/1.15 时实测 **52.0pt**），上沿与**姓名上沿齐平**（`top = 上边距 8.3pt`）、右沿与**正文右缘齐平**（`right = 右边距 15.62pt`）。**不再写死 89.28pt**：用户 2026-10-23 要求「缩小一点、高度与标题高度一致」，写死常量会让中英切换后错位；历史值 89.28/3.82/9.13 仅用于量原始样张（KI-14），不用于我们自己的导出
   - **陷阱（v1.9 更正）**：曾把「页面右边距」写成 98 pt —— 98.42 其实是 `595.5 − 497.08`，即**照片左边到页右缘**的距离，与右边距不是一回事。真实右边距只有 **9.13 pt**（约 3.2 mm），照片几乎贴着页边。
   - **第二个陷阱**：`pdfplumber` 的 `im["top"]` **未按 MediaBox 归一化** —— 该样张 `/MediaBox` 下边为 `7.83`，所以 pdfplumber 报的 `-4.01` 与内容流算出的 `3.82` 矛盾；**以内容流（`cm` 矩阵 + MediaBox 原点）为准**，pdfplumber 值只能当参考。
   - 冻结值（验收引用）：`89.3 / 497.1 / 距顶 3.8 / 距右缘 9.13`（AC-PHOTO-01..02）。实测自中文样张：A4 595.5×842.2 pt，内嵌 266×266 JPEG 渲染在此方块，与姓名区并列、不重叠。
@@ -578,7 +578,7 @@ captain 问的「PDF 出中文最终走哪条」——**已按本机实测定案
 3. **反作弊下限**（任何人「为了塞进一页」都不许越过）：正文**中位字号 ≥ 10.5 pt**、**行距比 ∈ [1.10, 1.25]**、边距不得小于 `original` 档（8.3/14.8 pt）。越线即为**规格违规**，不是「优化」。
    - 中位字号与行距比**都必须从产物 PDF 逐字符量出来**（pdfplumber `chars` 的 `size` 中位数、相邻行基线差中位数），不许读代码常量自证。
    - **两组必须同时成立**：*内容不减 + 字号达标 + 单页*。为让字号达标而裁条目数 / 删要点 ⇒ **FAIL**（条目数与 `build.selections` 的 `variant_ids` 总数逐条比对）。
-4. **照片不参与降档**：**89.28 × 89.28 pt**，距顶 **3.82 pt**、距右缘 **9.13 pt**，恒定不缩放（缩到 80 pt 以下会糊且不对齐）。
+4. **照片边长不随版式参数缩放**：它由标题区高度决定（`photo_box(body_pt, leading_ratio)` = `26 + 2 + body*ratio*2`），正文尺寸定了它自然就定；距顶 = 上边距、距右 = 右边距。**不得为凑版式单独改照片**。
 5. 上述数值**只有这一处**（契约侧）。代码里出现第二份常量即视为漂移：`grep -rn "89.28\|817.6\|565.05" server/`。
 6. **别用「内容高度直接减纸张高度」算溢出**——那会漏掉上下边距（uier 的 15 mm 结论就是这么少算了一个减法）。正确算式：`overflow = content_height − (page_height − margin_top − margin_bottom)`。
 

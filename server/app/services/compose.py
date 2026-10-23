@@ -470,6 +470,46 @@ def trim_courses(ir: dict[str, Any], *, min_keep: int = COURSES_MIN_KEEP) -> tup
     return before, after
 
 
+def _available_text(
+    profile: Mapping[str, Any],
+    extra_profile: Mapping[str, Any],
+    lang: str,
+    warnings: list[dict[str, Any]] | None,
+) -> str:
+    """页眉第三行的到岗时间：同语种优先；英文版缺英文值时不回退中文，改为告警。"""
+    if lang == "en":
+        value = str(extra_profile.get("available_note_en") or "").strip()
+        if value:
+            return value
+        zh_value = str(
+            profile.get("available_note") or profile.get("available_date") or ""
+        ).strip()
+        if zh_value and warnings is not None:
+            warnings.append(
+                {
+                    "code": "PROFILE_FIELD_MISSING",
+                    "severity": "warn",
+                    "message": (
+                        "英文简历缺少「到岗时间」的英文表述，已略过这一行；"
+                        "请在个人资料里补 available_note_en"
+                    ),
+                    "details": {
+                        "field": "available_note_en",
+                        "lang": "en",
+                        "withheld_zh_value": zh_value,
+                        "reason": "avoid_chinese_in_english_export",
+                    },
+                }
+            )
+        return ""
+    return str(
+        extra_profile.get("available_note_zh")
+        or profile.get("available_note")
+        or profile.get("available_date")
+        or ""
+    ).strip()
+
+
 def build_ir(
     build: Mapping[str, Any],
     *,
@@ -521,16 +561,10 @@ def build_ir(
                 else (profile.get("city") or "")
             )
         ),
-        "available": tidy(
-            str(
-                # 英文版：优先用户写的英文表述；没写就回退中文真值（用户口径「中文简历为准」），
-                # 不要留空——页眉第三行空着会让英文版看起来像没填到岗时间。
-                extra_profile.get(f"available_note_{lang}")
-                or profile.get("available_note")
-                or profile.get("available_date")
-                or ""
-            )
-        ),
+        # 到岗时间：**同语种优先，绝不把中文兜进英文页眉**。
+        # 实测踩过：英文版页眉印出「2027年1月下旬」——用户看到的是一份「英文简历里夹着中文」，
+        # 这在投递时是硬伤（CMP-34/CMP-40 都把它判 FAIL）。宁可这行不显示 + 告警让用户补英文值。
+        "available": _available_text(profile, extra_profile, lang, warnings),
         "labels": (
             {"available": i18n.label_en("到岗时间")}
             if lang == "en"

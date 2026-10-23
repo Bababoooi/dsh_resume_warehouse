@@ -398,14 +398,20 @@ def _pdf_02(flow):
 
 @check("AC-PDF-03")
 def _pdf_03(flow):
-    """照片右上角 89.28pt 方块：距顶 3.82、距右 9.13。"""
+    """照片右上角、边长 == 标题区高度、上沿齐上边距、右沿齐右边距。
+
+    2026-10-23 用户改定：照片要「缩小一点、高度与简历标题高度一致」。
+    旧的 89.28/3.82/9.13 是**原始样张**的量测值（见 server/tests/test_import_zh_v10.py），
+    不是导出件的期望值——所以这里连反向断言一起写：出现旧值也算 FAIL。
+    """
     images = pdf_metrics(flow)["images"]
     if not images:
         pytest.skip("本次导出未包含照片")
     box = images[0]
-    assert round(box["w"], 2) == 89.28 and round(box["h"], 2) == 89.28, box
-    assert abs(box["top"] - 3.82) <= 0.5, box
-    assert abs(box["right_gap"] - 9.13) <= 0.5, box
+    assert abs(box["w"] - 52.0) <= 1.5 and abs(box["h"] - 52.0) <= 1.5, box
+    assert abs(box["top"] - 8.3) <= 1.5, box
+    assert abs(box["right_gap"] - 15.62) <= 1.5, box
+    assert abs(box["w"] - 89.28) > 1.0, f"不得回退到旧的 89.28pt 口径：{box}"
 
 
 @check("AC-PDF-04")

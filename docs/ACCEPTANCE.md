@@ -25,7 +25,7 @@
 > 冻结 **v1.9**（2026-10-23）。v1.9（D-19）：新增 **§8.2 竞争力与院校偏好** —— **AC-ANL-06**（竞争力必须消费校名）、**AC-ANL-07**（院校偏好不许编造）、**AC-PRIV-14**（校名真实上云且七项齐全）。
 > 冻结 **v1.8**（2026-10-23）。v1.8：§7 新增 **AC-SKILL-01..04**（技能区逐字等于 `skills_json[].line` / 反向断言无 tag 块与标签云 / `tokens` 缺失降级不丢行 / `trim_courses` 默认关且裁剪进 warnings）；AC-UI-02/04 路径改 `web/`；路径口径随 D-15 统一为 `server/app/` + `web/`。
 > 冻结 **v1.7**（2026-10-23）。v1.7：§12.1 新增集成硬门 **INT-13**（端口顺延后 `实际 bind == /health.data.port == json["port"]` 三值相等）与 **INT-14**（全部只读 GET 冒烟：200 + `json.loads` 成功 + 体内无 `b'` 脏值 + `/env` 字体名断言），并写入「反向 grep 判据须先实测基线为 0」的入册元规则；AC-ENV-06/09 改按 §3.3 的 JSON 五字段口径。
-> 冻结 **v1.6**（2026-10-23）。v1.6：新增 AC-PRIV-13（`scripts/set-api-key.command` 只回显 key_set/指纹，禁止任何 key 片段——对应 captain 的 D-08 闭环）。
+> 冻结 **v1.6**（2026-10-23）。v1.6：新增 AC-PRIV-13（`设置API密钥.command` 只回显 key_set/指纹，禁止任何 key 片段——对应 captain 的 D-08 闭环）。
 > 冻结 **v1.5**（2026-10-23）。v1.5 按用户 m00265 收窄脱敏面：AC-PRIV-11 改为「姓名/电话/邮箱/照片脱敏、**学校名以真实值传输**」，AC-PRIV-12 增对照组（只含校名不得误报）。
 > 冻结 **v1.4**（2026-10-23）。v1.4 收口：新增 AC-LLM-12（`LLM_TRUNCATED` 与 `LLM_BAD_RESPONSE` 互不重叠）；AC-LLM-11 补 `details.completion_tokens` 与「`length` + 非空 content 同样是截断错误、零警告」；`text_verified` 字段名统一（AC-PDF-05）；warnings 表已无截断码。
 > 冻结 **v1.3**（2026-10-23）。v1.2 增照片（PHOTO）、下行抓取（FETCH）、宽路径脱敏（AC-PRIV-11/12）、端口顺延（AC-ENV-06/09）；v1.3 按用户决策**移除 Ollama**（重写 AC-LLM-01/03、KI-05，删除其警告码），并修复文件内 1 个 NUL 字节（此前会让 `grep` 判为 binary）。本文是**唯一验收口径**：`spec-verifier` / `qa` / `reviewer` 只按本文判定，不按口头描述判定。
@@ -119,7 +119,7 @@ cd resume-warehouse && .venv/bin/python -m pytest tests/acceptance -q --timeout=
 
 | ID | 级别 | 断言 | 验证 |
 |---|---|---|---|
-| AC-PRIV-01 | P0 | `data/imports/**`、`data/files/**` 的原始字节**永不出现在任何 HTTP 请求体中**。测试：把导入样张全文写入包，发起 LLM 生成，抓取 `llm_client` 的 request body，断言 body 中不含样张里独有的指纹串（如 `sample_resume` / 手机号 / 邮箱） | auto `test_ac_priv_01`（monkeypatch httpx transport 记录 body） |
+| AC-PRIV-01 | P0 | `data/imports/**`、`data/files/**` 的原始字节**永不出现在任何 HTTP 请求体中**。测试：把导入样张全文写入包，发起 LLM 生成，抓取 `llm_client` 的 request body，断言 body 中不含样张里独有的指纹串（如 `zhong_xudong` / 手机号 / 邮箱） | auto `test_ac_priv_01`（monkeypatch httpx transport 记录 body） |
 | AC-PRIV-02 | P0 | 未显式选中的 Package / Variant **不出现在** preview 的 payload 里 | auto `test_ac_priv_02` |
 | AC-PRIV-03 | P0 | `POST /api/v1/llm/complete` 缺 `preview_id` → 428 `LLM_CONSENT_REQUIRED`；过期（>600 s）→ 410 `LLM_CONSENT_EXPIRED`；payload 哈希与预览不符 **或** 同一 `preview_id` 二次使用 → 409 `LLM_CONSENT_MISMATCH` | auto `test_ac_priv_03` |
 | AC-PRIV-04 | P0 | `POST /api/v1/llm/preview` 响应必须含 `preview_id`、`provider`、`model`、`endpoint_host`、`expires_at`、`payload`（逐字将发送体）、`payload_sha256`、`total_chars`、`est_tokens`、`fields[]`（每项 `path/label/kind/source/chars/est_tokens/included/redacted`）、`excluded{packages_total,packages_selected,variants_total,variants_selected,skipped[],note}`、`redactions[]`、`warnings[]`；缺任一字段即失败 | auto `test_ac_priv_04` |
@@ -130,7 +130,7 @@ cd resume-warehouse && .venv/bin/python -m pytest tests/acceptance -q --timeout=
 | AC-PRIV-09 | P1 | 出网审计：`llm_call_log` 每次调用都留痕：`created_at/provider/model/endpoint_host/field_names_json/payload_bytes/est_tokens/http_status/latency_ms/ok/error_code`（**只存字段名，不存正文**），可在设置页「出网审计」查看 | auto + 手工 |
 | AC-PRIV-10 | P0 | **出网按方向分开验，判定口径是「是否携带用户数据」**：① 上行——`grep -rn "httpx\|requests\|urllib.request" app/` 的命中只允许出现在 `adapters/llm_client.py` 与 `adapters/fetch_client.py`；② 只有 `llm_client.py` 的请求可能带用户数据（测试里给 `llm_client` 装 recording transport，断言其 body 已脱敏）；③ 非 loopback 的 socket 连接若来自其他模块，测试必须失败。**不把 `fetch_client` 判为违规**（它只发公开 URL、请求体恒空，见 AC-FETCH-01） | auto `test_ac_priv_10` |
 | AC-PRIV-11 | P0 | **脱敏面收敛为「姓名 + 联系方式 + 照片」，学校名放行**（用户 m00265 最终口径）：构造含真实姓名/学校/电话/邮箱的 payload → `payload_json` 中**不得**出现姓名（中英，含 bullet 里的自称）、电话（含 `+86`/空格/短横线变体）、邮箱的**任何**明文子串，对应位置出现 `[NAME]`/`[PHONE]`/`[EMAIL]`；**但 `school_zh`/`school_en` 必须以真实值出现在 payload 中**（断言 `real_school in payload_json` 为真，且**不得**出现 `[SCHOOL]` 占位符，`grep -c "\[SCHOOL\]"` 在 payload 中为 0）；照片字节不得出现（无 base64）；`fields[]` 中命中项 `redacted=true`；`excluded.skipped[]` 含 `kind="profile_identity"` 且 `reason` 写明「姓名/联系方式/照片」 | auto `test_ac_priv_11` |
-| AC-PRIV-13 | P0 | **`scripts/set-api-key.command` 不回显 key 任何字符片段**：`grep -c '末尾四位' scripts/set-api-key.command` = **0**；`grep -Ec 'sk-[A-Za-z0-9]{4,}' scripts/set-api-key.command` = **0**；`grep -c '指纹' scripts/set-api-key.command` **≥1**（允许 SHA-256 前 8 位作身份锚点）。功能面：写入后 `.env` 权限 **600**、其余行原样保留、非 `sk-` 前缀与过短 key 均拒绝且 md5 不变、输出中不出现 key 任一字符 | auto `test_ac_priv_13` + 手工双击 |
+| AC-PRIV-13 | P0 | **`设置API密钥.command` 不回显 key 任何字符片段**：`grep -c '末尾四位' 设置API密钥.command` = **0**；`grep -Ec 'sk-[A-Za-z0-9]{4,}' 设置API密钥.command` = **0**；`grep -c '指纹' 设置API密钥.command` **≥1**（允许 SHA-256 前 8 位作身份锚点）。功能面：写入后 `.env` 权限 **600**、其余行原样保留、非 `sk-` 前缀与过短 key 均拒绝且 md5 不变、输出中不出现 key 任一字符 | auto `test_ac_priv_13` + 手工双击 |
 | AC-PRIV-12 | P0 | **服务端自检兜底且名单不含学校名**：`llm_payload.build()` 末尾调用 `assert_no_identity(payload, profile)`；① 人为注入一处真实姓名 → 抛异常并返回 500 `INTERNAL`，**且 httpx 调用计数 = 0**（宁可失败也不发出去）；② 对照组：payload 只含真实学校名（姓名/电话/邮箱均已脱敏）→ **不触发**自检、正常发送（防止把学校名误列进黑名单） | auto `test_ac_priv_12` |
 
 ---
@@ -253,7 +253,7 @@ cd resume-warehouse && .venv/bin/python -m pytest tests/acceptance -q --timeout=
 
 | ID | 级别 | 断言 | 验证 |
 |---|---|---|---|
-| AC-PHOTO-01 | P0 | **有照片时渲染在右上角且尺寸/位置符合**：A4 595.5×842.2 pt 下，照片框 89.3×89.3 pt（±1 pt），`x0≈497.1`（±2 pt）、距页顶 3.8 pt（±2 pt）、**距页面右缘 9.13 pt（±2 pt）**（= `595.5 − 497.08 − 89.28`；**不是** 98.42，后者是照片左边到页右缘）；与姓名区**不重叠**（姓名块右边界 < 497.1−4）；`include_photo=true` 时 PDF 内确有 1 个图像对象（pdfplumber `page.images`），中英两版均如此 | auto `test_ac_photo_01`（pdfplumber 量 bbox） |
+| AC-PHOTO-01 | P0 | **有照片时渲染在右上角，且边长与标题区等高**：A4 595.5×842.2 pt 下，照片边长 == 标题区实测高度（11pt/1.15 时 52.0 pt，±1.5）、上沿 == 上边距 8.3 pt（±1.5）、右沿 == 右边距 15.62 pt（±1.5）；**反向断言**：`size ≈ 89.28` 且 `top ≈ 3.82`（旧口径）判 FAIL——那是原始样张的值，不是导出件应有的值；与姓名区不重叠；`include_photo=true` 时 PDF 内恰 1 个图像对象，中英两版一致 | auto `test_ac_photo_01`（先用 `_header_story` 量标题高度再比 bbox） |
 | AC-PHOTO-02 | P0 | **无照片时布局不得错位**：同一模板在 `include_photo=false` 或 `photo_source=none` 下导出，姓名块扩到整行宽度、无空白方块占位、节距不变，`page_count` 与有照片时相同；pdfplumber 页面 `images == []` 且无 `\ufffd`/`\x00` | auto `test_ac_photo_02` |
 | AC-PHOTO-03 | P0 | **照片字节不得出现在任何 LLM payload**：对所有 purpose 取 preview → `payload_json` 中无 base64 图像特征（`data:image/`、超长 base64 串、图片 sha256），`fields[]` 无任何 `photo` 项；配套：`llm-egress.jsonl` 中不出现图片哈希 | auto `test_ac_photo_03` |
 | AC-PHOTO-05 | P0 | **删照片可撤销**：`DELETE /api/v1/profile/photo` → **200**（不是 204）+ `data.previous_photo_path` 非空且等于删除前的 `photo_path`；`data.cleared === true`；随后 `GET /profile` 的 `photo_path` 为空、`photo_source="none"`；再次 `DELETE` → 200 且 `previous_photo_path === null`（幂等）；照片文件**仍在** `data/profile/` 下（只清引用不删文件） | auto `test_ac_photo_05` |
@@ -383,7 +383,7 @@ cd resume-warehouse && .venv/bin/python -m pytest tests/acceptance -q --timeout=
 | AC-E2E-04 | P1 | **断网全链路**：拔网线/关 WiFi，完成 AC-E2E-01 全部步骤（LLM 相关跳过，用启发式） | 全流程成功，无卡死、无 30 s 超时 |
 ### 12.1 集成硬门（INT 系列，t11 直接照跑）
 
-> 编号沿用 `docs/maintainers/REVIEW-CHECKLIST.md` 的 INT 序列（INT-01..12 在那里）。**本节是 INT-11 的补充项**，因为 INT-11 只比对「文件里的端口 == 实际端口」，漏掉了一种会**绿着放过去**的死端口：实现把配置值写进 `/health` 而不是实际 bind 端口。
+> 编号沿用 `docs/REVIEW-CHECKLIST.md` 的 INT 序列（INT-01..12 在那里）。**本节是 INT-11 的补充项**，因为 INT-11 只比对「文件里的端口 == 实际端口」，漏掉了一种会**绿着放过去**的死端口：实现把配置值写进 `/health` 而不是实际 bind 端口。
 
 | ID | 级别 | 场景 | 通过标准（三处交叉，任一不等 → 判 coder，**BLOCKER**） |
 |---|---|---|---|

@@ -53,9 +53,11 @@
      注：98.42 = 595.5 − 497.08 是「照片左边到页右缘」的距离，不是右边距，
      不要拿它当 right 偏移。绝对定位的 right 以 padding box 外缘为界，
      而 .doc 的 padding box 外缘就是页边，所以这里直接写 9.1pt。 */
-  --doc-photo-size: 89.28pt;
-  --doc-photo-top: 3.82pt;
-  --doc-photo-right: 9.13pt;
+  /* 照片：边长 == 标题区高度（姓名行 26pt + 2pt + 两行元信息 2×11×1.15=25.3 → 53.3；
+     与后端 photo_box() 同口径，11pt/1.15 实测 52pt）。上沿齐上边距、右沿齐右边距。 */
+  --doc-photo-size: 52pt;
+  --doc-photo-top: 8.3pt;
+  --doc-photo-right: 15.6pt;
   position: relative;
 
   color-scheme: light;

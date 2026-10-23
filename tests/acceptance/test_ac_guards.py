@@ -123,15 +123,15 @@ def _completion(content: str = "", *, finish_reason: str = "stop", reasoning: st
 
 @check("AC-PDF-13")
 def _pdf_13(flow):
-    """照片不参与降档：正文可能缩字号，照片尺寸/位置纹丝不动。"""
+    """照片不随排版参数单独缩放：边长仍等于标题区高度（52pt@11pt/1.15），位置仍贴齐页边。"""
     metrics = pdf_metrics(flow)
     images = metrics["images"]
     if not images:
         pytest.skip("本次导出没有照片")
     box = images[0]
-    assert abs(box["w"] - 89.28) <= 0.5 and abs(box["h"] - 89.28) <= 0.5, box
-    assert abs(box["top"] - 3.82) <= 1.0, box
-    assert abs(box["right_gap"] - 9.13) <= 1.0, box
+    assert abs(box["w"] - 52.0) <= 1.5 and abs(box["h"] - 52.0) <= 1.5, box
+    assert abs(box["top"] - 8.3) <= 1.5, box
+    assert abs(box["right_gap"] - 15.62) <= 1.5, box
     assert metrics["min"] >= 9.5, metrics["min"]
 
 

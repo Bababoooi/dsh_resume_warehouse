@@ -49,7 +49,17 @@ DENSITY: dict[str, dict[str, float]] = {
 LADDER: tuple[tuple[float, float], ...] = ((11.0, 1.15), (10.5, 1.15), (10.0, 1.15), (9.5, 1.15))
 MIN_BODY_PT = 9.5
 
-PHOTO = {"size": 89.28, "top": 3.82, "right": 9.13}
+#: 照片几何：边长不再写死 89.28pt，而是**与标题区等高**（用户要求）。
+#: 标题区 = 姓名行（22pt）+ 两行元信息（联系方式、到岗时间）；照片上沿与姓名上沿齐平、
+#: 右沿与正文右缘齐平，看上去是「标题区里的一个方块」，而不是抢眼的贴纸。
+PHOTO = {"size": 49.3, "top": 8.3, "right": 15.62}
+
+NAME_LEADING = 26.0
+
+
+def photo_box(body_pt: float = 11.0, leading_ratio: float = 1.15) -> dict[str, float]:
+    """照片边长 = 标题区高度（姓名行 + 两行元信息），预览侧与渲染侧共用同一口径。"""
+    return {"size": round(NAME_LEADING + 2 + body_pt * leading_ratio * 2, 2)}
 
 FONT_NAME = "CV"
 FONT_PATH = envcheck.SONGTI_PATH
@@ -308,24 +318,27 @@ def _collect_warnings(ir: Mapping[str, Any]) -> tuple[list[dict[str, Any]], int]
     return warnings, stripped_total
 
 
-def _build_story(ir: Mapping[str, Any], body_pt: float, leading_ratio: float, width: float, *, lang: str = "zh"):
-    from reportlab.lib.units import mm  # noqa: F401  (保持 reportlab 已导入)
+def _header_story(
+    ir: Mapping[str, Any], body_pt: float, leading_ratio: float, *, lang: str = "zh"
+) -> list[Any]:
+    """页眉三件（姓名 / 联系方式 / 到岗时间）。
+
+    单独抽出来只有一个理由：**照片边长要与标题区等高，必须量真实高度**——
+    靠常量估会在中英切换时错位。
+    """
     from reportlab.platypus import Paragraph, Spacer
 
     styles = _styles(body_pt, leading_ratio, lang=lang)
     styles_cjk = _styles(body_pt, leading_ratio, lang="zh")
-
-    def pick(text: str, key: str):
-        """含中文的段落用宋体，纯西文用当前语言字体（英文版才是 Times）。"""
-        return styles_cjk[key] if has_cjk(text) else styles[key]
     header = ir.get("header") or {}
     story: list[Any] = []
 
-    def para(text: Any, style: str, **kwargs) -> Any:
+    def para(text: Any, style: str) -> Any:
         clean, _ = sanitize_text(str(text or ""))
         if not clean:
             return None
-        return Paragraph(escape_xml(clean), pick(clean, style), **kwargs)
+        key = styles_cjk if has_cjk(clean) else styles
+        return Paragraph(escape_xml(clean), key[style])
 
     if header.get("name"):
         story.append(para(header["name"], "name"))
@@ -341,18 +354,52 @@ def _build_story(ir: Mapping[str, Any], body_pt: float, leading_ratio: float, wi
         item = para(f"{label}{sep}{header['available']}", "meta")
         if item is not None:
             story.append(item)
+    return story
+
+
+def _build_story(
+    ir: Mapping[str, Any],
+    body_pt: float,
+    leading_ratio: float,
+    width: float,
+    *,
+    lang: str = "zh",
+    gap: float = 0.0,
+):
+    from reportlab.lib.units import mm  # noqa: F401  (保持 reportlab 已导入)
+    from reportlab.platypus import Paragraph, Spacer
+
+    styles = _styles(body_pt, leading_ratio, lang=lang)
+    styles_cjk = _styles(body_pt, leading_ratio, lang="zh")
+
+    def pick(text: str, key: str):
+        """含中文的段落用宋体，纯西文用当前语言字体（英文版才是 Times）。"""
+        return styles_cjk[key] if has_cjk(text) else styles[key]
+    story: list[Any] = _header_story(ir, body_pt, leading_ratio, lang=lang)
+
+    def para(text: Any, style: str, **kwargs) -> Any:
+        clean, _ = sanitize_text(str(text or ""))
+        if not clean:
+            return None
+        return Paragraph(escape_xml(clean), pick(clean, style), **kwargs)
 
     for section in ir.get("sections") or []:
+        if gap:
+            story.append(Spacer(1, gap))
         heading = para(section.get("heading"), "heading")
         if heading is not None:
             story.append(heading)
         if section.get("kind") == "skills":
             for line in section.get("skills") or []:
+                if gap:
+                    story.append(Spacer(1, round(gap * 0.35, 2)))
                 item = para(line, "skill")
                 if item is not None:
                     story.append(item)
             continue
         for entry in section.get("entries") or []:
+            if gap:
+                story.append(Spacer(1, round(gap * 0.6, 2)))
             title = sanitize_text(str(entry.get("title") or ""))[0].strip()
             date = sanitize_text(str(entry.get("date") or ""))[0].strip()
             # 标题若已经就是单位名（导入的经历常见），不再重复一次
@@ -367,11 +414,15 @@ def _build_story(ir: Mapping[str, Any], body_pt: float, leading_ratio: float, wi
                 # 副行另起会让每条经历多占 1–2 行（实测 33 行被撑到 45 行）。
                 story.append(_entry_head(title, sub_parts, date, styles, styles_cjk, width, body_pt))
             for line in entry.get("bullets") or []:
+                if gap:
+                    story.append(Spacer(1, round(gap * 0.35, 2)))
                 item = para(f"· {line}", "bullet")
                 if item is not None:
                     story.append(item)
             # facts 是简历里的整段固定文本（GPA/CET/主修课程），行首不加 bullet 标记
             for line in entry.get("facts") or []:
+                if gap:
+                    story.append(Spacer(1, round(gap * 0.3, 2)))
                 item = para(str(line), "bullet")
                 if item is not None:
                     story.append(item)
@@ -493,11 +544,46 @@ def render_pdf(
             }
         )
 
-    story = _build_story(ir, chosen[0], chosen[1], width, lang=lang)
+    # 纵向铺满，但要「自然」：先抬行距（视觉上更透气，符合原件的 1.1–1.2 倍习惯），
+    # 剩余零头再分给章节/条目间距，且间距最多 12pt——再大就像在凑字数。
+    # 每一步都用**真实分页**复核：_measure 求和只是估计，frame 边界会多吃几 pt，
+    # 实测过「量着装得下、实际掉第二页」和「退回一半后底部又空 143pt」两个坑。
+    base_story = _build_story(ir, chosen[0], chosen[1], width, lang=lang)
+    base_used = _measure(base_story, width, available)
+    slack = available - base_used
+    ratio = chosen[1]
+    if slack > 0:
+        for candidate in (1.25, 1.22, 1.18):
+            if base_used * candidate / chosen[1] <= available - 6:
+                ratio = candidate
+                break
+    body_pt = chosen[0]
+    leading_ratio = ratio
+
+    def gaps(max_gap: float) -> list[float]:
+        return [round(i * 2.0, 2) for i in range(0, int(max_gap / 2) + 1)]
+
+    story = _build_story(ir, body_pt, leading_ratio, width, lang=lang)
+    filled_gap = 0.0
+    best = None
+    for gap in gaps(16.0):
+        candidate = _build_story(ir, body_pt, leading_ratio, width, lang=lang, gap=gap)
+        if _measure(candidate, width, available) <= available:
+            best = (candidate, gap)
+        else:
+            break
+    if best:
+        story, filled_gap = best
+    used = _measure(story, width, available)
+    overflow = round(max(0.0, used - available), 2)
+
     buf = io.BytesIO()
-    photo_top = PHOTO["top"]
-    photo_right = PHOTO["right"]
-    photo_size = PHOTO["size"]
+    # 照片：边长 == 标题区真实高度；上沿与姓名上沿齐平，右沿与正文右缘齐平。
+    photo_size = round(
+        _measure(_header_story(ir, chosen[0], chosen[1], lang=lang), width, available), 2
+    )
+    photo_top = float(margins["top"])
+    photo_right = float(margins["right"])
     photo_path = (ir.get("header") or {}).get("photo_path")
 
     def draw_photo(canv, doc):  # noqa: ANN001 - reportlab 回调签名
@@ -516,25 +602,56 @@ def render_pdf(
             mask="auto",
         )
 
-    doc = SimpleDocTemplate(
-        buf,
-        pagesize=(PAGE_W, PAGE_H),
-        leftMargin=margins["left"],
-        rightMargin=margins["right"],
-        topMargin=margins["top"],
-        bottomMargin=margins["bottom"],
-        title=str((ir.get("header") or {}).get("name") or "简历"),
-        author="Resume Warehouse",
-        creator="Resume Warehouse (local)",
-    )
-    doc.build(story, onFirstPage=draw_photo, onLaterPages=draw_photo)
-    data = buf.getvalue()
-    page_count = data.count(b"/Type /Page") - data.count(b"/Type /Pages")
+    def build_with(gap_value: float) -> tuple[bytes, int]:
+        """按给定章节间距渲染一次，返回 (pdf bytes, 页数)。
+
+        ``_measure`` 求和高度只是估计——reportlab 真正分页时 frame 边界会多吃几 pt；
+        所以「间距铺满」必须用**真实分页结果**复核，装出两页就退回半档、再退回 0。
+        这就是中文版曾因铺满而掉到第 2 页的那个坑。
+        """
+        flowed = (
+            _build_story(ir, body_pt, leading_ratio, width, lang=lang, gap=gap_value)
+            if gap_value
+            else _build_story(ir, body_pt, leading_ratio, width, lang=lang)
+        )
+        buffer = io.BytesIO()
+        document = SimpleDocTemplate(
+            buffer,
+            pagesize=(PAGE_W, PAGE_H),
+            leftMargin=margins["left"],
+            rightMargin=margins["right"],
+            topMargin=margins["top"],
+            bottomMargin=margins["bottom"],
+            title=str((ir.get("header") or {}).get("name") or "简历"),
+            author="Resume Warehouse",
+            creator="Resume Warehouse (local)",
+        )
+        document.build(flowed, onFirstPage=draw_photo, onLaterPages=draw_photo)
+        blob = buffer.getvalue()
+        pages = blob.count(b"/Type /Page") - blob.count(b"/Type /Pages")
+        return blob, max(1, pages)
+
+    # 从「量出来的最大可行间距」往下按 2pt 退，直到真实分页 = 1 页。
+    # 只退一半不够：实测 en 34pt 会掉页、退到 17pt 后底部又空出 143pt；
+    # 逐步退到第一个真正装得下的值，才能又满又不掉页。
+    attempts = [round(g, 2) for g in (filled_gap - i * 2 for i in range(0, 8)) if g >= 0]
+    data, page_count = build_with(attempts[0])
+    filled_gap = attempts[0]
+    for candidate_gap in attempts[1:]:
+        if page_count <= 1:
+            break
+        data, page_count = build_with(candidate_gap)
+        filled_gap = candidate_gap
+    if page_count > 1:
+        # 行距抬过头了：退回原行距、间距归零，宁可有留白也不许掉页
+        leading_ratio = chosen[1]
+        filled_gap = 0.0
+        data, page_count = build_with(0.0)
     return RenderResult(
         data=data,
         page_count=max(1, page_count),
-        body_pt=chosen[0],
-        leading=round(chosen[0] * chosen[1], 2),
+        body_pt=body_pt,
+        leading=round(body_pt * leading_ratio, 2),
         used_height_pt=used,
         available_height_pt=available,
         warnings=warnings,
@@ -543,10 +660,16 @@ def render_pdf(
             "layout": {
                 "available_height_pt": available,
                 "text_width_pt": width,
-                "body_pt": chosen[0],
-                "leading": round(chosen[0] * chosen[1], 2),
+                "body_pt": body_pt,
+                "leading": round(body_pt * leading_ratio, 2),
+                "leading_ratio": leading_ratio,
                 "margins": dict(margins),
-                "photo": dict(PHOTO) if photo_path else None,
+                "photo": (
+                    {"size": photo_size, "top": photo_top, "right": photo_right}
+                    if photo_path
+                    else None
+                ),
+                "section_gap_pt": filled_gap,
             },
         },
     )

@@ -26,9 +26,12 @@ import sys
 from collections import Counter
 from pathlib import Path
 
-PHOTO_SIZE_PT = 89.28
-PHOTO_TOP_PT = 3.82
-PHOTO_RIGHT_PT = 9.13
+# 照片口径（2026-10-23 用户改定）：边长 == 标题区高度、上沿齐上边距、右沿齐右边距。
+# 89.28/3.82/9.13 是**原始样张**的量测值，只用于量 data/imports/** 里的样张，
+# 传 --photo-size 89.28 --photo-top 3.82 --photo-right 9.13 即可复现旧口径。
+PHOTO_SIZE_PT = 52.0
+PHOTO_TOP_PT = 8.3
+PHOTO_RIGHT_PT = 15.62
 # 版心右边距按 density 取值（见 ARCHITECTURE §7.5.1）：
 #   original = 用户原件密度（右 15.62pt）—— 默认
 #   relaxed  = 通用边距（右 42.5pt = 15mm）
@@ -73,6 +76,12 @@ def main(argv: list[str]) -> int:
     parser.add_argument("--expect-pages", type=int, default=1)
     parser.add_argument("--min-size", type=float, default=9.5)
     parser.add_argument("--photo", action="store_true")
+    parser.add_argument("--photo-size", type=float, default=None,
+                        help="照片边长期望值（默认 52.0=标题区高度；量原始样张传 89.28）")
+    parser.add_argument("--photo-top", type=float, default=None,
+                        help="距页顶期望值（默认 8.3=上边距；原始样张 3.82）")
+    parser.add_argument("--photo-right", type=float, default=None,
+                        help="距右缘期望值（默认 15.62=右边距；原始样张 9.13）")
     parser.add_argument("--draft")
     parser.add_argument("--identity")
     parser.add_argument("--density", choices=("original", "relaxed"), default="original",
@@ -169,18 +178,21 @@ def main(argv: list[str]) -> int:
                    None if one else "照片必须恰 1 张（用户明确要求保留）")
             if one:
                 im = images[0]
-                ok_size = abs(im["w"] - PHOTO_SIZE_PT) <= TOL_SIZE and abs(im["h"] - PHOTO_SIZE_PT) <= TOL_SIZE
+                want_size = args.photo_size if args.photo_size is not None else PHOTO_SIZE_PT
+                want_top = args.photo_top if args.photo_top is not None else PHOTO_TOP_PT
+                want_right = args.photo_right if args.photo_right is not None else PHOTO_RIGHT_PT
+                ok_size = abs(im["w"] - want_size) <= TOL_SIZE and abs(im["h"] - want_size) <= TOL_SIZE
                 record("photo_size", ok_size,
-                       f"{im['w']}×{im['h']}pt，期望 {PHOTO_SIZE_PT}±{TOL_SIZE}",
-                       None if ok_size else "照片尺寸被改动（不得随字号降档缩放）")
-                ok_top = abs(im["top_from_page_top"] - PHOTO_TOP_PT) <= TOL_POS
+                       f"{im['w']}×{im['h']}pt，期望 {want_size}±{TOL_SIZE}",
+                       None if ok_size else "照片边长应等于标题区高度（photo_box = 26+2+2×body×leading）")
+                ok_top = abs(im["top_from_page_top"] - want_top) <= TOL_POS
                 record("photo_top", ok_top,
-                       f"距页顶 {im['top_from_page_top']}pt（已按 mediabox.bottom={im['mediabox_bottom']} 归一），期望 {PHOTO_TOP_PT}±{TOL_POS}",
-                       None if ok_top else "距顶偏移；注意 mediabox 下边非 0 时 pdfplumber 的 top 会整体偏移")
-                ok_right = abs(im["right_gap"] - PHOTO_RIGHT_PT) <= TOL_POS
+                       f"距页顶 {im['top_from_page_top']}pt（已按 mediabox.bottom={im['mediabox_bottom']} 归一），期望 {want_top}±{TOL_POS}",
+                       None if ok_top else "上沿应与姓名上沿齐平（= 上边距 8.3pt）")
+                ok_right = abs(im["right_gap"] - want_right) <= TOL_POS
                 record("photo_right", ok_right,
-                       f"距右缘 {im['right_gap']}pt，期望 {PHOTO_RIGHT_PT}±{TOL_POS}",
-                       None if ok_right else "右边距偏移（98.42 是照片左边位置，不是边距）")
+                       f"距右缘 {im['right_gap']}pt，期望 {want_right}±{TOL_POS}",
+                       None if ok_right else "右沿应与正文右缘齐平（= 右边距 15.62pt）")
 
         # 要点完整性：PDF 里「·」开头的行数必须等于 draft 条目总数
         if args.draft:
