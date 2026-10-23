@@ -1,6 +1,6 @@
 {
   "name": "dsh-plugin-resume-warehouse",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Local-first resume warehouse for DeepSeek Harness: one tool to start/stop the local app and read its health. Everything stays on this machine; the only outbound path is a configurable LLM API.",
   "license": "MIT",
   "type": "module",
@@ -36,7 +36,7 @@
   "repository": {
     "type": "git",
     "url": "git+https://github.com/Bababoooi/dsh_resume_warehouse.git",
-    "directory": "plugin"
+    "directory": "plugins/resume-warehouse"
   },
   "homepage": "https://github.com/Bababoooi/dsh_resume_warehouse#readme",
   "bugs": {

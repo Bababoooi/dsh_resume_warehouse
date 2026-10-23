@@ -100,7 +100,7 @@ MIT，见 [LICENSE](LICENSE)。
 
 ## DSH 插件（可选）
 
-`plugin/` 是可发布到 npm 的 DSH bundle：它只注册一个工具 `resume_warehouse`（`status` / `start` / `stop` / `open`），
+`plugins/resume-warehouse/` 是可发布到 npm 的 DSH bundle：它只注册一个工具 `resume_warehouse`（`status` / `start` / `stop` / `open`），
 用来启动/停止本仓库的 Python 应用并读取 `/health`。应用本体仍在本仓库，插件不复制任何业务代码。
 
 ```bash
