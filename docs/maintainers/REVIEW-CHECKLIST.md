@@ -2715,9 +2715,9 @@ EOF
     s = json.dumps(d["payload"], ensure_ascii=False) if not isinstance(d["payload"], str) else d["payload"]
     school = "示例大学"
     print("school_hits:", s.count(school), "name:", s.count("张三"), "phone:", "13800000000" in s,
-          "email_hit:", "xudong" in s.lower(), "placeholder:", s.count("[SCHOOL]") + s.count("<SCHOOL>"))
+          "email_hit:", "sample_zh" in s.lower(), "placeholder:", s.count("[SCHOOL]") + s.count("<SCHOOL>"))
     assert s.count(school) >= 1, "校名未进 payload = 过度脱敏"
-    assert s.count("张三") == 0 and "13800000000" not in s and "xudong" not in s.lower()
+    assert s.count("张三") == 0 and "13800000000" not in s and "sample_zh" not in s.lower()
     assert s.count("[SCHOOL]") + s.count("<SCHOOL>") == 0, "占位符方案已废，出现即旧实现在跑"
     PY
     ```
