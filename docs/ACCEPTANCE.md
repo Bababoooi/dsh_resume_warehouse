@@ -119,7 +119,7 @@ cd resume-warehouse && .venv/bin/python -m pytest tests/acceptance -q --timeout=
 
 | ID | 级别 | 断言 | 验证 |
 |---|---|---|---|
-| AC-PRIV-01 | P0 | `data/imports/**`、`data/files/**` 的原始字节**永不出现在任何 HTTP 请求体中**。测试：把导入样张全文写入包，发起 LLM 生成，抓取 `llm_client` 的 request body，断言 body 中不含样张里独有的指纹串（如 `zhong_xudong` / 手机号 / 邮箱） | auto `test_ac_priv_01`（monkeypatch httpx transport 记录 body） |
+| AC-PRIV-01 | P0 | `data/imports/**`、`data/files/**` 的原始字节**永不出现在任何 HTTP 请求体中**。测试：把导入样张全文写入包，发起 LLM 生成，抓取 `llm_client` 的 request body，断言 body 中不含样张里独有的指纹串（如 `sample_zh` / 手机号 / 邮箱） | auto `test_ac_priv_01`（monkeypatch httpx transport 记录 body） |
 | AC-PRIV-02 | P0 | 未显式选中的 Package / Variant **不出现在** preview 的 payload 里 | auto `test_ac_priv_02` |
 | AC-PRIV-03 | P0 | `POST /api/v1/llm/complete` 缺 `preview_id` → 428 `LLM_CONSENT_REQUIRED`；过期（>600 s）→ 410 `LLM_CONSENT_EXPIRED`；payload 哈希与预览不符 **或** 同一 `preview_id` 二次使用 → 409 `LLM_CONSENT_MISMATCH` | auto `test_ac_priv_03` |
 | AC-PRIV-04 | P0 | `POST /api/v1/llm/preview` 响应必须含 `preview_id`、`provider`、`model`、`endpoint_host`、`expires_at`、`payload`（逐字将发送体）、`payload_sha256`、`total_chars`、`est_tokens`、`fields[]`（每项 `path/label/kind/source/chars/est_tokens/included/redacted`）、`excluded{packages_total,packages_selected,variants_total,variants_selected,skipped[],note}`、`redactions[]`、`warnings[]`；缺任一字段即失败 | auto `test_ac_priv_04` |

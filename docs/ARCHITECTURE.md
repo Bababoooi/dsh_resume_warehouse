@@ -434,7 +434,7 @@ DATA_DIR=./data
 **回填机制**：LLM 输出里会保留 `[NAME]` / `[PHONE]` / `[EMAIL]` / `[ID]` 占位符 → 入库时**原样保存**，只在 `render_html` / `render_pdf` / `render_docx` 生成最终产物时用 profile 真实值替换（同一函数也负责 ATS 文本层）。这样即使日志或产物被复制走，也不会出现姓名 + 联系方式的明文组合（校名可明文）。
 
 **验证方式（三条，缺一不可）**
-1. 单测：把含指纹串（`zhong_xudong`、手机号、邮箱）的素材灌入库 → 走 `preview` → 断言 `payload` JSON 中不含任何指纹（AC-PRIV-01）。
+1. 单测：把含指纹串（`sample_zh`、手机号、邮箱）的素材灌入库 → 走 `preview` → 断言 `payload` JSON 中不含任何指纹（AC-PRIV-01）。
 2. 结构：`llm_client.send()` 只接受 `ConsentGrant` 对象（含 `preview_id` + `payload_sha256`），无法直接传字符串；`llm_payload.build()` 的入参是 `variant_ids` 白名单，不是 `package_id`（避免「取整包」）。
 3. 审计：`data/logs/llm-egress.jsonl` 只记 `field_names[]`，不记正文（AC-PRIV-07）。
 
