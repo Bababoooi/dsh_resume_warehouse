@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "Resume Warehouse",
+    "description": "Local-first resume warehouse: packs work into reusable packages, imports an existing resume into a template, analyses a JD, assembles a tailored Chinese/English resume and exports a PDF (named position-name-school). Adds one tool to start/stop the local app and read its health; nothing leaves this machine except the LLM call you approve."
+  }
+}

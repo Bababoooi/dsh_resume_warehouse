@@ -1,0 +1,36 @@
+{
+  "name": "dsh-plugin-resume-warehouse",
+  "version": "0.1.0",
+  "description": "Local-first resume warehouse for DeepSeek Harness: one tool to start/stop the local app and read its health. Everything stays on this machine; the only outbound path is a configurable LLM API.",
+  "license": "MIT",
+  "type": "module",
+  "keywords": [
+    "dsh-plugin",
+    "resume",
+    "local-first",
+    "tools"
+  ],
+  "exports": {
+    ".": "./index.js",
+    "./locale/*.json": "./locale/*.json",
+    "./icon": "./icon.svg"
+  },
+  "files": [
+    "index.js",
+    "cordis.patch.yml",
+    "locale/*.json",
+    "icon.svg",
+    "README.md"
+  ],
+  "engines": {
+    "dsh": ">=0.1.0"
+  },
+  "scripts": {
+    "test": "node --test test/*.test.mjs"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  }
+}

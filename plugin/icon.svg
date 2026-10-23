@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Resume Warehouse">
+  <rect x="4" y="4" width="56" height="56" rx="14" fill="#1f6feb"/>
+  <rect x="16" y="14" width="32" height="36" rx="3" fill="#ffffff" opacity="0.96"/>
+  <rect x="21" y="21" width="22" height="3" rx="1.5" fill="#1f6feb"/>
+  <rect x="21" y="28" width="16" height="3" rx="1.5" fill="#1f6feb" opacity="0.75"/>
+  <rect x="21" y="35" width="19" height="3" rx="1.5" fill="#1f6feb" opacity="0.55"/>
+  <circle cx="46" cy="46" r="9" fill="#0b3d91"/>
+  <path d="M42 46l3 3 6-6" stroke="#ffffff" stroke-width="2.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

@@ -1,0 +1,4 @@
+- insert:
+    - id: resume-warehouse
+      name: 'dsh-plugin-resume-warehouse'
+      config: {}
