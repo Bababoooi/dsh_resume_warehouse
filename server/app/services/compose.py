@@ -269,9 +269,9 @@ def _entry_from_package(
 
     return {
         "package_id": package.get("id"),
-        "title": tidy(str(overrides.get("title_display") or package.get("title") or "")),
-        "org": tidy(str(overrides.get("org_display") or package.get("org") or "")),
-        "role": tidy(str(overrides.get("role_display") or package.get("role") or "")),
+        "title": tidy(str(overrides.get("title_display") or _lang_value(package, "title", lang) or "")),
+        "org": tidy(str(overrides.get("org_display") or _lang_value(package, "org", lang) or "")),
+        "role": tidy(str(overrides.get("role_display") or _lang_value(package, "role", lang) or "")),
         "location": tidy(str(overrides.get("location_display") or package.get("location") or "")),
         "date": format_date_range(
             package.get("start_date"),
@@ -316,7 +316,15 @@ def _education_from_profile(
             label = {"gpa": "GPA", "ranking": "排名", "cet": "语言", "courses": "主修课程"}[key]
             facts.append(f"{label}：{value.strip()}")
     title = school
-    org = " ".join(part for part in (degree, major) if part)
+    if lang == "en":
+        # 英文习惯是「B.M. in Management Science」；空格直拼会读成
+        # 「Wuhan University B.M. Management Science」，缺连接词。
+        if degree and major:
+            org = f"{degree} in {major}"
+        else:
+            org = " ".join(part for part in (degree, major) if part)
+    else:
+        org = " ".join(part for part in (degree, major) if part)
     return {
         "package_id": None,
         "title": tidy(title),
@@ -344,7 +352,22 @@ def _education_from_profile(
     }
 
 
-def _static_texts(blocks: Sequence[Mapping[str, Any]]) -> dict[str, list[str]]:
+def _lang_value(obj: Mapping[str, Any], base: str, lang: str) -> Any:
+    """``lang=en`` 且存在非空 ``<base>_en`` 时取英文列，否则回落中文列。
+
+    英文版不能靠导出时现翻（那会破坏「预览==导出」「同输入同产物」「用户改过不被
+    覆盖」三件事），所以英文原文存在库里；缺英文就整行回退并计入 LANG_FALLBACK。
+    """
+    if lang == "en":
+        value = obj.get(f"{base}_en")
+        if value is not None and str(value).strip():
+            return value
+    return obj.get(base)
+
+
+def _static_texts(
+    blocks: Sequence[Mapping[str, Any]], *, lang: str = "zh"
+) -> dict[str, list[str]]:
     """按 section kind 归集模板里的静态文本（``template_block.static_text``）。
 
     静态文本是「用户自己简历里就写死的那几行」——教育段的 GPA/CET/主修课程、
@@ -368,7 +391,9 @@ def _static_texts(blocks: Sequence[Mapping[str, Any]]) -> dict[str, list[str]]:
         return None
 
     for block in sorted(blocks, key=lambda item: int(item.get("order_index") or 0)):
-        text = str(block.get("static_text") or "").strip()
+        zh_text = str(block.get("static_text") or "").strip()
+        en_text = str(block.get("static_text_en") or "").strip()
+        text = en_text if (lang == "en" and en_text) else zh_text
         if not text:
             continue
         kind = kind_of(block)
@@ -566,7 +591,7 @@ def build_ir(
             }
         )
 
-    static_by_kind = _static_texts(blocks)
+    static_by_kind = _static_texts(blocks, lang=lang)
     fallback_state: dict[str, Any] = {
         "used": False,
         "entries": 0,
@@ -661,7 +686,11 @@ def build_ir(
         skills_lines: list[str] = []
         if kind == "skills":
             for row in profile.get("skills") or []:
-                line = row.get("line") if isinstance(row, Mapping) else str(row)
+                line = (
+                    _lang_value(row, "line", lang)
+                    if isinstance(row, Mapping)
+                    else str(row)
+                )
                 text = tidy(str(line or ""))
                 if text:
                     skills_lines.append(text)

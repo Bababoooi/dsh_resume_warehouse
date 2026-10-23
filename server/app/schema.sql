@@ -555,3 +555,19 @@ ALTER TABLE resume_build ADD COLUMN archived_at TEXT;
 CREATE INDEX IF NOT EXISTS idx_build_archived ON resume_build(archived_at);
 
 UPDATE app_setting SET value = '12', updated_at = strftime('%Y-%m-%dT%H:%M:%S+08:00','now','localtime') WHERE key = 'schema_version';
+
+-- ---------------------------------------------------------------------------
+-- 中英双栏：英文版正文不靠「导出时现翻」
+--
+-- 为什么：lang=en 时教育段原文、经历标题、技能整句若只存中文，导出只能整行回退，
+-- 英文简历里就出现中文（用户实测 28 行里 11 行）。而「导出时现翻」会破坏三件事：
+-- 预览 == 导出、同输入同产物、用户改过的措辞不被覆盖。所以把英文原文**存进库**，
+-- 渲染层按语言取列，缺英文则整行回退并计入 LANG_FALLBACK（不许半翻译）。
+-- ---------------------------------------------------------------------------
+-- @version 13
+ALTER TABLE template_block ADD COLUMN static_text_en TEXT;
+ALTER TABLE package ADD COLUMN title_en TEXT;
+ALTER TABLE package ADD COLUMN org_en TEXT;
+ALTER TABLE package ADD COLUMN role_en TEXT;
+
+UPDATE app_setting SET value = '13', updated_at = strftime('%Y-%m-%dT%H:%M:%S+08:00','now','localtime') WHERE key = 'schema_version';
