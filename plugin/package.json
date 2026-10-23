@@ -42,5 +42,8 @@
   "bugs": {
     "url": "https://github.com/Bababoooi/dsh_resume_warehouse/issues"
   },
-  "author": "Bababoooi"
+  "author": "Bababoooi",
+  "publishConfig": {
+    "access": "public"
+  }
 }
