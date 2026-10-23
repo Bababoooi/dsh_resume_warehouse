@@ -1,0 +1,1853 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>设计预览 · 简历仓库（离线可开）</title>
+    <meta name="color-scheme" content="light dark" />
+    <!-- 设计评审用静态页：零 JS、零外部资源，双击即可离线打开（AC-UI-01 / AC-UI-02） -->
+    <link rel="stylesheet" href="./src/styles/tokens.css" />
+    <link rel="stylesheet" href="./src/styles/base.css" />
+    <link rel="stylesheet" href="./src/styles/layout.css" />
+    <link rel="stylesheet" href="./src/styles/components.css" />
+    <link rel="stylesheet" href="./src/styles/print.css" />
+    <style>
+      /* 仅本页使用的评审脚手架（不进入产品样式） */
+      .pv {
+        background: var(--c-bg-sunken);
+        color: var(--c-text);
+        font-family: var(--font-sans);
+        line-height: var(--lh-body);
+      }
+      .pv-top {
+        position: sticky;
+        top: 0;
+        z-index: 60;
+        display: flex;
+        align-items: center;
+        gap: var(--sp-6);
+        padding: var(--sp-4) var(--sp-8);
+        background: color-mix(in oklab, var(--c-surface) 92%, transparent);
+        backdrop-filter: blur(8px);
+        border-bottom: 1px solid var(--c-border);
+      }
+      .pv-top__brand {
+        display: flex;
+        align-items: baseline;
+        gap: var(--sp-3);
+        font-weight: 600;
+        white-space: nowrap;
+      }
+      .pv-top__brand span {
+        font-size: var(--fs-11);
+        font-weight: 400;
+        color: var(--c-text-3);
+        font-family: var(--font-mono);
+      }
+      .pv-nav {
+        display: flex;
+        gap: var(--sp-2);
+        overflow-x: auto;
+        scrollbar-width: none;
+      }
+      .pv-nav a {
+        padding: 4px 10px;
+        border-radius: var(--r-pill);
+        font-size: var(--fs-12);
+        color: var(--c-text-2);
+        white-space: nowrap;
+      }
+      .pv-nav a:hover {
+        background: var(--c-surface-hover);
+        color: var(--c-text);
+      }
+      .pv-top__note {
+        margin-left: auto;
+        font-size: var(--fs-11);
+        color: var(--c-text-3);
+        white-space: nowrap;
+      }
+      .pv-main {
+        max-width: 1360px;
+        margin: 0 auto;
+        padding: 0 var(--sp-8) var(--sp-13);
+      }
+      .pv-sec {
+        padding: var(--sp-11) 0 var(--sp-10);
+        border-top: 1px solid var(--c-border);
+      }
+      .pv-sec__head {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: var(--sp-3);
+        margin-bottom: var(--sp-7);
+      }
+      .pv-sec__head .pv-h2 {
+        font-size: var(--fs-24);
+      }
+      .pv-sec__num {
+        font-family: var(--font-mono);
+        font-size: var(--fs-11);
+        color: var(--c-text-3);
+        letter-spacing: 0.08em;
+      }
+      .pv-h2 {
+        font-size: var(--fs-24);
+        font-weight: var(--fw-semibold);
+        letter-spacing: var(--tracking-cjk);
+        margin: 0;
+      }
+      .pv-lead {
+        max-width: var(--w-prose);
+        color: var(--c-text-2);
+        margin: 0;
+      }
+      .pv-hero {
+        padding: var(--sp-12) 0 var(--sp-10);
+      }
+      .pv-hero h1 {
+        font-size: var(--fs-38);
+        line-height: 1.2;
+        letter-spacing: var(--tracking-tight);
+        margin: 0 0 var(--sp-5);
+      }
+      .pv-hero p {
+        max-width: 62ch;
+        color: var(--c-text-2);
+        font-size: var(--fs-15);
+        margin: 0 0 var(--sp-6);
+      }
+      .pv-chips {
+        display: flex;
+        gap: var(--sp-3);
+        flex-wrap: wrap;
+      }
+      .pv-grid3 {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+        gap: var(--sp-6);
+      }
+      .pv-card {
+        padding: var(--sp-6);
+        border: 1px solid var(--c-border);
+        border-radius: var(--r-md);
+        background: var(--c-surface);
+      }
+      .pv-card h3 {
+        font-size: var(--fs-15);
+        margin: 0 0 var(--sp-2);
+      }
+      .pv-card p {
+        margin: 0;
+        font-size: var(--fs-13);
+        color: var(--c-text-2);
+      }
+      .pv-frame {
+        border: 1px solid var(--c-border-strong);
+        border-radius: var(--r-lg);
+        overflow: hidden;
+        box-shadow: var(--sh-3);
+        background: var(--c-bg);
+      }
+      .pv-frame .app {
+        height: 660px;
+        min-height: 0;
+      }
+      .pv-frame--tall .app {
+        height: 760px;
+      }
+      /* 高内容屏（导入校对）：让框架随内容长高，评审时一屏看全 */
+      .pv-frame--auto {
+        height: auto;
+      }
+      .pv-frame--auto .app {
+        height: auto;
+      }
+      .pv-frame--auto .main__scroll {
+        overflow: visible;
+      }
+      .pv-frame--auto .sidenav {
+        position: sticky;
+        top: 0;
+        align-self: start;
+        max-height: 100vh;
+      }
+      .pv-frame .app__statusbar {
+        position: relative;
+      }
+      .pv-screen {
+        margin-bottom: var(--sp-11);
+      }
+      .pv-screen__label {
+        display: flex;
+        align-items: baseline;
+        gap: var(--sp-4);
+        margin-bottom: var(--sp-4);
+        flex-wrap: wrap;
+      }
+      .pv-screen__no {
+        font-family: var(--font-mono);
+        font-size: var(--fs-12);
+        color: var(--c-primary-text);
+        background: var(--c-primary-soft);
+        border: 1px solid var(--c-primary-soft-border);
+        border-radius: var(--r-sm);
+        padding: 1px 7px;
+      }
+      .pv-screen__name {
+        font-size: var(--fs-16);
+        font-weight: var(--fw-semibold);
+      }
+      .pv-screen__route {
+        font-family: var(--font-mono);
+        font-size: var(--fs-11);
+        color: var(--c-text-3);
+      }
+      .pv-notes {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: var(--sp-5);
+        margin-top: var(--sp-5);
+      }
+      .pv-note {
+        border-left: 2px solid var(--c-border-strong);
+        padding-left: var(--sp-4);
+      }
+      .pv-note h4 {
+        margin: 0 0 2px;
+        font-size: var(--fs-12);
+        color: var(--c-text-2);
+        font-weight: 600;
+      }
+      .pv-note p {
+        margin: 0;
+        font-size: var(--fs-12);
+        color: var(--c-text-3);
+        line-height: 1.55;
+      }
+      .pv-swatches {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(158px, 1fr));
+        gap: var(--sp-4);
+      }
+      .pv-swatch {
+        border: 1px solid var(--c-border);
+        border-radius: var(--r-sm);
+        overflow: hidden;
+        background: var(--c-surface);
+      }
+      .pv-swatch__chip {
+        height: 44px;
+        border-bottom: 1px solid var(--c-border);
+      }
+      .pv-swatch__meta {
+        padding: 6px var(--sp-3) 8px;
+        font-size: var(--fs-11);
+        color: var(--c-text-2);
+        line-height: 1.45;
+      }
+      .pv-swatch__meta code {
+        font-family: var(--font-mono);
+        font-size: 10px;
+        color: var(--c-text-3);
+        display: block;
+      }
+      .pv-type-row {
+        display: grid;
+        grid-template-columns: 96px 1fr;
+        gap: var(--sp-5);
+        align-items: baseline;
+        padding: var(--sp-3) 0;
+        border-bottom: 1px solid var(--c-border);
+      }
+      .pv-type-row code {
+        font-family: var(--font-mono);
+        font-size: var(--fs-11);
+        color: var(--c-text-3);
+      }
+      .pv-two {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: var(--sp-6);
+      }
+      .pv-two > * {
+        min-width: 0;
+      }
+      /* 纸张按 210×297mm 排版，视觉上靠 transform 缩放；
+         用固定尺寸的舞台接住缩放后的占位，避免撑爆栅格 */
+      .pv-paper {
+        width: calc(210mm * 0.66);
+        height: calc(297mm * 0.66);
+        margin: 0 auto;
+        overflow: hidden;
+      }
+      .pv-paper .doc {
+        transform-origin: top left !important;
+        transform: scale(0.66) !important;
+        margin: 0 !important;
+      }
+      @media (max-width: 900px) {
+        .pv-two {
+          grid-template-columns: 1fr;
+        }
+      }
+      .pv-panel {
+        padding: var(--sp-5);
+        border: 1px solid var(--c-border);
+        border-radius: var(--r-md);
+        background: var(--c-surface);
+      }
+      .pv-panel h4 {
+        margin: 0 0 var(--sp-4);
+        font-size: var(--fs-12);
+        color: var(--c-text-2);
+      }
+      .pv-list {
+        margin: 0;
+        padding-left: 1.15em;
+        font-size: var(--fs-13);
+        color: var(--c-text-2);
+        line-height: 1.7;
+      }
+      .pv-list li::marker {
+        color: var(--c-text-3);
+      }
+      .pv-foot {
+        max-width: 1360px;
+        margin: 0 auto;
+        padding: var(--sp-10) var(--sp-8) var(--sp-12);
+        border-top: 1px solid var(--c-border);
+        color: var(--c-text-3);
+        font-size: var(--fs-12);
+      }
+      .pv-panel .naming__chips {
+        flex-wrap: wrap;
+      }
+      .ico {
+        width: 16px;
+        height: 16px;
+        flex: 0 0 auto;
+        fill: none;
+        stroke: currentColor;
+        stroke-width: 1.6;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+        vertical-align: -2px;
+      }
+      .ico--sm {
+        width: 13px;
+        height: 13px;
+      }
+      /* 评审用：把一屏里的「说明浮层」压住，避免遮挡 */
+      .pv-frame .tree-section__actions,
+      .pv-frame .tree-entry__actions,
+      .pv-frame .tree-bullet__actions {
+        opacity: 1;
+      }
+      .pv-frame .modal {
+        max-height: none;
+      }
+      /* 评审图里主区只有约 1000px 宽：把抽屉与卡片列按窄容器重排，避免视觉上互相压住 */
+      .pv-frame .split--drawer {
+        grid-template-columns: minmax(0, 1fr) 400px;
+      }
+      .pv-frame .split--drawer .drawer {
+        width: auto;
+      }
+      .pv-frame .pkg-grid {
+        grid-template-columns: 1fr;
+      }
+      /* 构建页中栏：纸张固定外框 + transform 缩放（缩放放在 wrapper 上，
+         doc 的 width:210mm 不参与缩放坐标换算，避免出现左侧被裁） */
+      .pv-frame .build-preview__stage {
+        min-height: 0;
+        padding: var(--sp-5);
+        overflow: hidden;
+      }
+      .pv-frame .split--build {
+        grid-template-columns: 270px minmax(0, 1fr) 372px;
+      }
+      /* 纸张缩放：外层固定 373×528 盒（=794×1123 的 0.47），doc 用 px 固定原始尺寸后
+         只做 transform 缩放 —— 不要用 zoom，也不要让 doc 的 width:210mm 参与缩放计算，
+         否则内容会画出白底之外（Chrome 的 zoom 会重算布局宽度）。 */
+      .pv-frame .build-preview__frame {
+        width: 373px;
+        height: 528px;
+        min-height: 0;
+        max-width: none;
+        overflow: hidden;
+      }
+      .pv-frame .build-preview__frame .doc {
+        width: 794px !important;
+        min-height: 1123px;
+        transform: scale(0.47) !important;
+        transform-origin: top left;
+        margin: 0 !important;
+        box-shadow: none;
+      }
+      .pv-frame .variant {
+        width: 176px;
+      }
+      .pv-frame .modal-layer {
+        position: absolute;
+      }
+      .pv-frame {
+        position: relative;
+      }
+      .pv-dark {
+        padding: var(--sp-7);
+        border-radius: var(--r-lg);
+        border: 1px solid var(--c-border);
+        background: var(--c-bg);
+        color: var(--c-text);
+      }
+    </style>
+  </head>
+  <body class="pv">
+    <!-- 内联图标符号表：与 icons.js 同一套 path，零外部依赖 -->
+    <svg width="0" height="0" style="position: absolute" aria-hidden="true">
+      <symbol id="i-dashboard" viewBox="0 0 24 24"><path d="M3 9.5 12 3l9 6.5V21a1 1 0 0 1-1 1h-5v-7H10v7H4a1 1 0 0 1-1-1z" /></symbol>
+      <symbol id="i-warehouse" viewBox="0 0 24 24"><path d="M21 8v13H3V8M1 3h22v5H1zM10 12h4" /></symbol>
+      <symbol id="i-template" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8zM14 2v6h6M8 13h8M8 17h5" /></symbol>
+      <symbol id="i-target" viewBox="0 0 24 24"><path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20M12 7a5 5 0 1 0 0 10 5 5 0 0 0 0-10M12 11a1 1 0 1 0 0 2 1 1 0 0 0 0-2" /></symbol>
+      <symbol id="i-layers" viewBox="0 0 24 24"><path d="M12 2 2 7l10 5 10-5zM2 12l10 5 10-5M2 17l10 5 10-5" /></symbol>
+      <symbol id="i-user" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z" /></symbol>
+      <symbol id="i-settings" viewBox="0 0 24 24"><path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6" /></symbol>
+      <symbol id="i-search" viewBox="0 0 24 24"><path d="M11 19a8 8 0 1 0 0-16 8 8 0 0 0 0 16zM21 21l-4.35-4.35" /></symbol>
+      <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" /></symbol>
+      <symbol id="i-download" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3" /></symbol>
+      <symbol id="i-upload" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12" /></symbol>
+      <symbol id="i-check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5" /></symbol>
+      <symbol id="i-check-circle" viewBox="0 0 24 24"><path d="M22 11.1V12a10 10 0 1 1-5.9-9.1M22 4 12 14.01l-3-3" /></symbol>
+      <symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12" /></symbol>
+      <symbol id="i-trash" viewBox="0 0 24 24"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6M10 11v5M14 11v5" /></symbol>
+      <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M23 4v6h-6M1 20v-6h6M3.5 9a9 9 0 0 1 14.9-3.4L23 10M20.5 15A9 9 0 0 1 5.6 18.4L1 14" /></symbol>
+      <symbol id="i-eye" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8zM12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z" /></symbol>
+      <symbol id="i-alert-triangle" viewBox="0 0 24 24"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0zM12 9v4M12 17h.01" /></symbol>
+      <symbol id="i-alert-circle" viewBox="0 0 24 24"><path d="M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20M12 8v4M12 16h.01" /></symbol>
+      <symbol id="i-info" viewBox="0 0 24 24"><path d="M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20M12 16v-4M12 8h.01" /></symbol>
+      <symbol id="i-clock" viewBox="0 0 24 24"><path d="M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20M12 6v6l4 2" /></symbol>
+      <symbol id="i-cloud-off" viewBox="0 0 24 24"><path d="M22.6 16.4A5 5 0 0 0 18 8h-1.3A8 8 0 0 0 3 12c0 1.4.4 2.7 1 3.8M1 1l22 22" /></symbol>
+      <symbol id="i-lock" viewBox="0 0 24 24"><path d="M5 11h14v11H5zM8 11V7a4 4 0 1 1 8 0v4" /></symbol>
+      <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" /></symbol>
+      <symbol id="i-chat" viewBox="0 0 24 24"><path d="M21 11.5a8.4 8.4 0 0 1-9 8.4 8.6 8.6 0 0 1-3.8-.9L3 21l1.9-5.2a8.4 8.4 0 0 1 9-11A8.4 8.4 0 0 1 21 11.5z" /></symbol>
+      <symbol id="i-folder" viewBox="0 0 24 24"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" /></symbol>
+      <symbol id="i-file" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8zM14 2v6h6" /></symbol>
+      <symbol id="i-globe" viewBox="0 0 24 24"><path d="M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20M2 12h20M12 2a15 15 0 0 1 0 20 15 15 0 0 1 0-20" /></symbol>
+      <symbol id="i-arrow-up" viewBox="0 0 24 24"><path d="M12 19V5M5 12l7-7 7 7" /></symbol>
+      <symbol id="i-arrow-down" viewBox="0 0 24 24"><path d="M12 5v14M19 12l-7 7-7-7" /></symbol>
+      <symbol id="i-arrow-right" viewBox="0 0 24 24"><path d="M5 12h14M13 5l7 7-7 7" /></symbol>
+      <symbol id="i-chevron-left" viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6" /></symbol>
+      <symbol id="i-grip" viewBox="0 0 24 24"><path d="M9 6h.01M9 12h.01M9 18h.01M15 6h.01M15 12h.01M15 18h.01" /></symbol>
+      <symbol id="i-key" viewBox="0 0 24 24"><path d="M21 2l-2 2M15.5 8.5a4.5 4.5 0 1 1-6.4 6.4L3 21l-1-1 6.1-6.1a4.5 4.5 0 0 1 6.4-6.4zM15 9l3-3" /></symbol>
+      <symbol id="i-sparkles" viewBox="0 0 24 24"><path d="M12 3l1.8 4.6 4.6 1.8-4.6 1.8L12 15.8 10.2 11.2 5.6 9.4l4.6-1.8zM19 15l.9 2.1 2.1.9-2.1.9-.9 2.1-.9-2.1-2.1-.9 2.1-.9z" /></symbol>
+    </svg>
+
+    <header class="pv-top">
+      <div class="pv-top__brand">简历仓库 · 设计预览 <span>v1 · 2026-10</span></div>
+      <nav class="pv-nav" aria-label="预览目录">
+        <a href="#tokens">设计 token</a>
+        <a href="#screens">6 个界面</a>
+        <a href="#consent">隐私确认</a>
+        <a href="#paper">A4 样张</a>
+        <a href="#states">状态对照</a>
+        <a href="#dark">深色</a>
+      </nav>
+      <div class="pv-top__note">静态评审页 · 零 JS · 零外部资源 · file:// 可开</div>
+    </header>
+
+    <main class="pv-main">
+      <section class="pv-hero">
+        <h1>本地简历仓库：把经历变成可重组的弹药</h1>
+        <p>
+          这是一份可离线打开的设计预览：左侧是「经历库」，中间是「对话式录入」，右侧是「按 JD 组装」。
+          所有数据留在本机；唯一会联网的动作是调用模型，而调用前必须经过一次「将发送字段清单」确认。
+          下面按 token、六个界面、隐私弹层、A4 导出样张、状态对照的顺序展开。
+        </p>
+        <div class="pv-chips">
+          <span class="ui-badge ui-badge--accent">中文排版优先</span>
+          <span class="ui-badge">深浅色同一套 token</span>
+          <span class="ui-badge">零构建 · 原生 ES modules</span>
+          <span class="ui-badge">1280×800 可用</span>
+          <span class="ui-badge ui-badge--success">导出即 A4</span>
+        </div>
+      </section>
+
+      <!-- ============================================================ TOKENS -->
+      <section class="pv-sec" id="tokens">
+        <div class="pv-sec__head">
+          <span class="pv-sec__num">01</span>
+          <h2 class="pv-h2">设计 token：颜色只有一份深色定义</h2>
+          <p class="pv-lead">
+            所有颜色用 <code>light-dark(浅色, 深色)</code> 成对声明，配合 <code>color-scheme: light dark</code>；
+            深色主题不是「另做一套」，因此不会出现只在一边修好的样式。
+            唯一例外是 A4 纸张（print.css）：它必须模拟导出的白纸，永远不跟随主题。
+          </p>
+        </div>
+
+        <h3 class="ui-section__title">语义色（浅色）</h3>
+        <div class="pv-swatches" style="margin-bottom: var(--sp-8)">
+          <div class="pv-swatch"><div class="pv-swatch__chip" style="background: var(--c-bg)"></div><div class="pv-swatch__meta">页面底色<code>--c-bg</code></div></div>
+          <div class="pv-swatch"><div class="pv-swatch__chip" style="background: var(--c-surface)"></div><div class="pv-swatch__meta">卡片面<code>--c-surface</code></div></div>
+          <div class="pv-swatch"><div class="pv-swatch__chip" style="background: var(--c-surface-2)"></div><div class="pv-swatch__meta">次级面 / 状态条<code>--c-surface-2</code></div></div>
+          <div class="pv-swatch"><div class="pv-swatch__chip" style="background: var(--c-primary-solid)"></div><div class="pv-swatch__meta">主色（实心按钮）<code>--c-primary-solid</code></div></div>
+          <div class="pv-swatch"><div class="pv-swatch__chip" style="background: var(--c-primary-soft); border-bottom: 1px solid var(--c-primary-soft-border)"></div><div class="pv-swatch__meta">主色浅底<code>--c-primary-soft</code></div></div>
+          <div class="pv-swatch"><div class="pv-swatch__chip" style="background: var(--c-success)"></div><div class="pv-swatch__meta">成功 / 已核实<code>--c-success</code></div></div>
+          <div class="pv-swatch"><div class="pv-swatch__chip" style="background: var(--c-warn)"></div><div class="pv-swatch__meta">警告 / 待确认<code>--c-warn</code></div></div>
+          <div class="pv-swatch"><div class="pv-swatch__chip" style="background: var(--c-danger)"></div><div class="pv-swatch__meta">错误 / 缺口<code>--c-danger</code></div></div>
+          <div class="pv-swatch"><div class="pv-swatch__chip" style="background: var(--c-info)"></div><div class="pv-swatch__meta">中性信息<code>--c-info</code></div></div>
+          <div class="pv-swatch"><div class="pv-swatch__chip" style="background: var(--c-text)"></div><div class="pv-swatch__meta">正文<code>--c-text</code></div></div>
+          <div class="pv-swatch"><div class="pv-swatch__chip" style="background: var(--c-text-2)"></div><div class="pv-swatch__meta">次级文字<code>--c-text-2</code></div></div>
+          <div class="pv-swatch"><div class="pv-swatch__chip" style="background: var(--c-text-3)"></div><div class="pv-swatch__meta">三级文字<code>--c-text-3</code></div></div>
+          <div class="pv-swatch"><div class="pv-swatch__chip" style="background: var(--c-border)"></div><div class="pv-swatch__meta">分隔线<code>--c-border</code></div></div>
+          <div class="pv-swatch"><div class="pv-swatch__chip" style="background: var(--c-surface-hover)"></div><div class="pv-swatch__meta">悬停底<code>--c-surface-hover</code></div></div>
+        </div>
+
+        <div class="pv-two">
+          <div>
+            <h3 class="ui-section__title">字体栈（中文优先，零外链）</h3>
+            <div class="pv-panel">
+              <p class="small" style="margin: 0 0 var(--sp-4)">
+                <strong>界面</strong>：-apple-system → PingFang SC → 微软雅黑 → Noto Sans CJK<br />
+                <strong>文档（中文 PDF）</strong>：Songti SC（宋体）→ STSong → serif，字距 0.01em<br />
+                <strong>文档（英文 PDF）</strong>：Georgia → Times New Roman，左对齐不强行两端对齐
+              </p>
+              <p class="ui-field__note" style="margin: 0">
+                界面字体绝不与文档字体混用：屏幕上看到的 A4 纸张就是导出效果的预览，字体必须同源。
+              </p>
+            </div>
+
+            <h3 class="ui-section__title" style="margin-top: var(--sp-7)">字号阶梯</h3>
+            <div class="pv-panel" style="padding-top: var(--sp-3); padding-bottom: var(--sp-3)">
+              <div class="pv-type-row"><code>--fs-38 / 38</code><span style="font-size: var(--fs-38); line-height: 1.2; font-weight: 600">简历仓库</span></div>
+              <div class="pv-type-row"><code>--fs-30</code><span style="font-size: var(--fs-30); line-height: 1.3">把经历讲清楚</span></div>
+              <div class="pv-type-row"><code>--fs-24</code><span style="font-size: var(--fs-24); line-height: 1.35">组装与导出预览</span></div>
+              <div class="pv-type-row"><code>--fs-20</code><span style="font-size: var(--fs-20)">Package 仓库</span></div>
+              <div class="pv-type-row"><code>--fs-16</code><span style="font-size: var(--fs-16)">数据分析实习生 · 示例科技</span></div>
+              <div class="pv-type-row"><code>--fs-15</code><span style="font-size: var(--fs-15)">正文：负责增长活动的归因分析，产出 3 份周报。</span></div>
+              <div class="pv-type-row"><code>--fs-13</code><span style="font-size: var(--fs-13)">辅助说明：这条经历有 4 个表述变体，已核实 2 条。</span></div>
+              <div class="pv-type-row"><code>--fs-12</code><span style="font-size: var(--fs-12); color: var(--c-text-2)">元信息：2026-03 更新 · 来自「导入简历 2026.pdf」</span></div>
+              <div class="pv-type-row" style="border-bottom: 0"><code>--fs-11</code><span style="font-size: var(--fs-11); color: var(--c-text-3)">最小字号：不要用于长文本，仅用于标签与计数</span></div>
+            </div>
+          </div>
+
+          <div>
+            <h3 class="ui-section__title">中英混排（不得错行）</h3>
+            <div class="pv-panel">
+              <p class="prose" style="margin: 0 0 var(--sp-5)">
+                在 <strong>DAU 120 万</strong>的社区产品上负责推荐策略：把 CTR 从
+                <strong>3.1%</strong> 提升到 <strong>4.4%</strong>，同时把长尾内容的曝光占比提高
+                <strong>18%</strong>（A/B 实验，样本 n=42,000，p&lt;0.05）。
+              </p>
+              <p class="prose" style="margin: 0 0 var(--sp-5)">
+                Built an <em>end-to-end</em> evaluation pipeline (Python + SQL, 约 1.2 万行) that cut
+                manual review time from 6h to 40min per week.
+              </p>
+              <div class="ui-callout ui-callout--info" style="margin: 0">
+                <strong>排版规则</strong>
+                <div class="small">
+                  中文行高 1.65（≥1.5）；<code>line-break: normal</code> 允许在标点前后断行但不拆词；
+                  <code>overflow-wrap: break-word</code> 兜住超长英文与 URL；数字使用 tabular-nums 对齐。
+                </div>
+              </div>
+            </div>
+
+            <h3 class="ui-section__title" style="margin-top: var(--sp-7)">间距 / 圆角 / 阴影</h3>
+            <div class="pv-panel">
+              <div class="stack" style="gap: var(--sp-3)">
+                <div class="row" style="gap: var(--sp-4)"><code class="mono small" style="width: 84px">--sp-1 → 4</code><span style="height: 8px; width: var(--sp-1); background: var(--c-primary-solid); border-radius: 2px"></span><span style="height: 8px; width: var(--sp-4); background: var(--c-primary-solid); border-radius: 2px"></span><span class="small muted">4px 基准</span></div>
+                <div class="row" style="gap: var(--sp-4)"><code class="mono small" style="width: 84px">--sp-6 → 16</code><span style="height: 8px; width: var(--sp-6); background: var(--c-primary-solid); border-radius: 2px"></span><span class="small muted">卡片内边距</span></div>
+                <div class="row" style="gap: var(--sp-4)"><code class="mono small" style="width: 84px">--sp-9 → 32</code><span style="height: 8px; width: var(--sp-9); background: var(--c-primary-solid); border-radius: 2px"></span><span class="small muted">区块间距</span></div>
+              </div>
+              <div class="row" style="gap: var(--sp-4); margin-top: var(--sp-6)">
+                <span style="width: 44px; height: 24px; background: var(--c-surface-2); border: 1px solid var(--c-border); border-radius: var(--r-xs)"></span>
+                <span style="width: 44px; height: 24px; background: var(--c-surface-2); border: 1px solid var(--c-border); border-radius: var(--r-sm)"></span>
+                <span style="width: 44px; height: 24px; background: var(--c-surface-2); border: 1px solid var(--c-border); border-radius: var(--r-md)"></span>
+                <span style="width: 44px; height: 24px; background: var(--c-surface-2); border: 1px solid var(--c-border); border-radius: var(--r-lg)"></span>
+                <span class="small muted">r-xs / r-sm / r-md / r-lg</span>
+              </div>
+              <div class="row" style="gap: var(--sp-5); margin-top: var(--sp-5)">
+                <span style="width: 64px; height: 34px; background: var(--c-surface); border-radius: var(--r-sm); box-shadow: var(--sh-1)"></span>
+                <span style="width: 64px; height: 34px; background: var(--c-surface); border-radius: var(--r-sm); box-shadow: var(--sh-2)"></span>
+                <span style="width: 64px; height: 34px; background: var(--c-surface); border-radius: var(--r-sm); box-shadow: var(--sh-3)"></span>
+                <span class="small muted">sh-1 卡片 / sh-2 悬停 / sh-3 弹层</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============================================================ SCREENS -->
+      <section class="pv-sec" id="screens">
+        <div class="pv-sec__head">
+          <span class="pv-sec__num">02</span>
+          <h2 class="pv-h2">六个主界面</h2>
+          <p class="pv-lead">
+            每屏都给出：进入路径、默认状态、空/加载/错误态、键盘可达性。
+            界面里所有身份信息都来自「个人资料」，前端不硬编码任何姓名或学校。
+          </p>
+        </div>
+
+        <!-- 01 工作台 -->
+        <article class="pv-screen">
+          <div class="pv-screen__label">
+            <span class="pv-screen__no">01</span>
+            <span class="pv-screen__name">对话式录入工作台</span>
+            <span class="pv-screen__route">#/workbench</span>
+          </div>
+          <div class="pv-frame">
+            <div class="app">
+              <header class="app__statusbar" role="status">
+                <span class="status-item" title="本地运行：数据与文件都保存在这台机器上">
+                  <i class="status-dot status-dot--ok"></i>
+                  <span class="status-local">127.0.0.1:52341</span>
+                  <span class="small">本地</span>
+                </span>
+                <i class="status-sep" aria-hidden="true"></i>
+                <span class="status-item" title="AI 仅在你确认后联网，发送字段逐项可见">
+                  <i class="status-dot status-dot--ok"></i>DeepSeek 已就绪
+                </span>
+                <i class="status-sep" aria-hidden="true"></i>
+                <span class="status-item" title="中文 PDF 字体检测结果">
+                  <i class="status-dot status-dot--ok"></i>中文字体可用
+                </span>
+                <span class="app__statusbar__right">
+                  <span class="status-item">最近导出 <span class="mono small">数据分析实习生-陈思远-示例大学.pdf</span></span>
+                </span>
+              </header>
+              <div class="app__body">
+                <nav class="sidenav" aria-label="主导航">
+                  <div class="sidenav__brand">
+                    <span class="sidenav__brand-mark" aria-hidden="true">RW</span>
+                    <span class="sidenav__brand-text">
+                      <span class="sidenav__brand-name">简历仓库</span>
+                      <span class="sidenav__brand-sub">本地 · 离线优先</span>
+                    </span>
+                  </div>
+                  <div class="sidenav__list">
+                    <div class="sidenav__group-label">工作</div>
+                    <a class="sidenav__item is-active" href="#/workbench" aria-current="page"><svg class="ico sidenav__icon"><use href="#i-dashboard" /></svg><span class="sidenav__label">工作台</span></a>
+                    <a class="sidenav__item" href="#/warehouse"><svg class="ico sidenav__icon"><use href="#i-warehouse" /></svg><span class="sidenav__label">经历库</span><span class="sidenav__count">12</span></a>
+                    <a class="sidenav__item" href="#/templates"><svg class="ico sidenav__icon"><use href="#i-template" /></svg><span class="sidenav__label">模板</span><span class="sidenav__count">3</span></a>
+                    <a class="sidenav__item" href="#/jobs"><svg class="ico sidenav__icon"><use href="#i-target" /></svg><span class="sidenav__label">目标职位</span><span class="sidenav__count">2</span></a>
+                    <a class="sidenav__item" href="#/builds"><svg class="ico sidenav__icon"><use href="#i-layers" /></svg><span class="sidenav__label">组装导出</span></a>
+                    <div class="sidenav__group-label">本地数据</div>
+                    <a class="sidenav__item" href="#/profile"><svg class="ico sidenav__icon"><use href="#i-user" /></svg><span class="sidenav__label">个人资料</span></a>
+                    <a class="sidenav__item" href="#/settings"><svg class="ico sidenav__icon"><use href="#i-settings" /></svg><span class="sidenav__label">设置</span></a>
+                  </div>
+                  <div class="sidenav__footer">
+                    <button class="sidenav__collapse" type="button" aria-expanded="true"><svg class="ico ico--sm"><use href="#i-x" /></svg><span class="sidenav__label">收起</span></button>
+                  </div>
+                </nav>
+                <div class="main">
+                  <div class="topbar">
+                    <nav class="topbar__crumbs" aria-label="面包屑"><span class="topbar__crumb">简历仓库</span><span aria-hidden="true">/</span><span class="topbar__crumb is-current" aria-current="page">对话式录入工作台</span></nav>
+                    <div class="topbar__right">
+                      <button class="ui-btn ui-btn--quiet ui-btn--sm" type="button"><svg class="ico ico--sm ui-btn__icon"><use href="#i-search" /></svg><span>搜索</span><span class="ui-btn__kbd">⌘K</span></button>
+                    </div>
+                  </div>
+                  <div class="main__scroll">
+                    <div class="page">
+                      <div class="page__head">
+                        <div class="page__head-text">
+                          <h1 class="page__title">今天想做什么？</h1>
+                          <p class="page__desc">三条入口都通向同一件事：把真实经历变成可复用的子弹，再打进某一份 JD。</p>
+                        </div>
+                        <div class="page__actions">
+                          <button class="ui-btn ui-btn--primary" type="button"><svg class="ico ui-btn__icon"><use href="#i-plus" /></svg><span>新建经历</span></button>
+                        </div>
+                      </div>
+                      <div class="grid grid--3">
+                        <a class="action-card" href="#/workbench">
+                          <span class="action-card__icon"><svg class="ico"><use href="#i-chat" /></svg></span>
+                          <span class="action-card__title">讲一段经历</span>
+                          <span class="action-card__desc">用对话把项目/实习拆成「事实 · 动作 · 结果」，产出多条表述变体。</span>
+                          <span class="action-card__arrow">开始对话 →</span>
+                        </a>
+                        <a class="action-card" href="#/templates">
+                          <span class="action-card__icon"><svg class="ico"><use href="#i-upload" /></svg></span>
+                          <span class="action-card__title">导入现有简历</span>
+                          <span class="action-card__desc">PDF 或 DOCX 拆成槽位与模板；照片会被单独识别，不混进正文。</span>
+                          <span class="action-card__arrow">选择文件 →</span>
+                        </a>
+                        <a class="action-card" href="#/builds">
+                          <span class="action-card__icon"><svg class="ico"><use href="#i-target" /></svg></span>
+                          <span class="action-card__title">按 JD 组装</span>
+                          <span class="action-card__desc">选中文/英文模板、勾经历、实时看文件名，导出 A4 PDF。</span>
+                          <span class="action-card__arrow">去组装 →</span>
+                        </a>
+                      </div>
+                      <div class="grid grid--sidebar" style="margin-top: var(--sp-8)">
+                        <div class="ui-card">
+                          <div class="ui-section__head" style="padding: var(--sp-5) var(--sp-6) var(--sp-3)">
+                            <h2 class="ui-section__title">最近构建</h2>
+                            <span class="small muted">最近 7 天</span>
+                          </div>
+                          <div class="mini-list" style="padding: 0 var(--sp-6) var(--sp-4)">
+                            <div class="mini-list__row"><span class="mini-list__main">数据分析实习生-陈思远-示例大学.pdf</span><span class="mini-list__meta">今天 09:12</span><span class="ui-badge ui-badge--success">已导出</span></div>
+                            <div class="mini-list__row"><span class="mini-list__main">数据分析实习生-陈思远-示例大学.pdf</span><span class="mini-list__meta">昨天 21:40</span><span class="ui-badge">草稿</span></div>
+                            <div class="mini-list__row"><span class="mini-list__main">产品运营-陈思远-示例大学.pdf</span><span class="mini-list__meta">10-19</span><span class="ui-badge ui-badge--warn">命名缺字段</span></div>
+                          </div>
+                        </div>
+                        <div class="stack">
+                          <div class="ui-card" style="padding: var(--sp-5)">
+                            <h2 class="ui-section__title">库健康度</h2>
+                            <div class="stat"><span class="stat__label">经历 Package</span><span class="stat__value">12 <small>条</small></span></div>
+                            <div class="stat"><span class="stat__label">表述变体</span><span class="stat__value">41 <small>条</small></span></div>
+                            <div class="stat"><span class="stat__label">待核实</span><span class="stat__value">6 <small>条</small></span></div>
+                            <div class="stat"><span class="stat__label">模板</span><span class="stat__value">3 <small>套</small></span></div>
+                          </div>
+                          <div class="ui-callout ui-callout--info">
+                            <div class="ui-callout__main">
+                              <div class="ui-callout__title">照片已在个人资料中设置</div>
+                              <div class="small">导出时默认保留照片（右上角 89.3×89.3pt）；可在导出页临时关闭。</div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="pv-notes">
+            <div class="pv-note"><h4>交互流程</h4><p>三个入口卡是并列的起点；卡片整块可点，不是「图标可点」。点「讲一段经历」进入对话面板，边聊边落成 Package 草稿。</p></div>
+            <div class="pv-note"><h4>空态</h4><p>库为空时三张卡下方出现「还没有经历」引导与示例导入按钮，而不是空白列表。</p></div>
+            <div class="pv-note"><h4>加载 / 错误</h4><p>骨架屏只在首次加载出现（&lt;300ms 不闪）。服务未启动时顶部状态条变红并给出「重启启动脚本」，工作台仍可浏览缓存。</p></div>
+            <div class="pv-note"><h4>键盘</h4><p>Tab 顺序：状态条 → 导航 → 三张动作卡 → 列表。⌘K 搜索、⌘S 保存、Esc 关闭浮层；卡片用 Enter 进入。</p></div>
+          </div>
+        </article>
+
+        <!-- 02 经历库 -->
+        <article class="pv-screen">
+          <div class="pv-screen__label">
+            <span class="pv-screen__no">02</span>
+            <span class="pv-screen__name">Package 仓库</span>
+            <span class="pv-screen__route">#/warehouse</span>
+          </div>
+          <div class="pv-frame pv-frame--tall">
+            <div class="app">
+              <header class="app__statusbar" role="status">
+                <span class="status-item"><i class="status-dot status-dot--ok"></i><span class="status-local">127.0.0.1:52341</span><span class="small">本地</span></span>
+                <i class="status-sep" aria-hidden="true"></i>
+                <span class="status-item"><i class="status-dot status-dot--ok"></i>DeepSeek 已就绪</span>
+                <i class="status-sep" aria-hidden="true"></i>
+                <span class="status-item"><i class="status-dot status-dot--ok"></i>中文字体可用</span>
+              </header>
+              <div class="app__body">
+                <nav class="sidenav" aria-label="主导航">
+                  <div class="sidenav__brand"><span class="sidenav__brand-mark" aria-hidden="true">RW</span><span class="sidenav__brand-text"><span class="sidenav__brand-name">简历仓库</span><span class="sidenav__brand-sub">本地 · 离线优先</span></span></div>
+                  <div class="sidenav__list">
+                    <div class="sidenav__group-label">工作</div>
+                    <a class="sidenav__item" href="#/workbench"><svg class="ico sidenav__icon"><use href="#i-dashboard" /></svg><span class="sidenav__label">工作台</span></a>
+                    <a class="sidenav__item is-active" href="#/warehouse" aria-current="page"><svg class="ico sidenav__icon"><use href="#i-warehouse" /></svg><span class="sidenav__label">经历库</span><span class="sidenav__count">12</span></a>
+                    <a class="sidenav__item" href="#/templates"><svg class="ico sidenav__icon"><use href="#i-template" /></svg><span class="sidenav__label">模板</span><span class="sidenav__count">3</span></a>
+                    <a class="sidenav__item" href="#/jobs"><svg class="ico sidenav__icon"><use href="#i-target" /></svg><span class="sidenav__label">目标职位</span><span class="sidenav__count">2</span></a>
+                    <a class="sidenav__item" href="#/builds"><svg class="ico sidenav__icon"><use href="#i-layers" /></svg><span class="sidenav__label">组装导出</span></a>
+                    <div class="sidenav__group-label">本地数据</div>
+                    <a class="sidenav__item" href="#/profile"><svg class="ico sidenav__icon"><use href="#i-user" /></svg><span class="sidenav__label">个人资料</span></a>
+                    <a class="sidenav__item" href="#/settings"><svg class="ico sidenav__icon"><use href="#i-settings" /></svg><span class="sidenav__label">设置</span></a>
+                  </div>
+                </nav>
+                <div class="main">
+                  <div class="topbar">
+                    <nav class="topbar__crumbs" aria-label="面包屑"><span class="topbar__crumb">简历仓库</span><span aria-hidden="true">/</span><span class="topbar__crumb is-current">Package 仓库</span></nav>
+                    <div class="topbar__right">
+                      <button class="ui-btn ui-btn--quiet ui-btn--sm" type="button"><svg class="ico ico--sm ui-btn__icon"><use href="#i-search" /></svg><span>搜索</span><span class="ui-btn__kbd">⌘K</span></button>
+                      <button class="ui-btn ui-btn--secondary ui-btn--sm" type="button"><svg class="ico ico--sm ui-btn__icon"><use href="#i-plus" /></svg><span>新建</span></button>
+                    </div>
+                  </div>
+                  <div class="main__scroll">
+                    <div class="page page--wide">
+                      <div class="split--drawer">
+                        <div class="stack">
+                          <div class="ui-toolbar">
+                            <label class="ui-input-wrap ui-input-wrap--search" style="min-width: 210px">
+                              <svg class="ico ico--sm ui-input-wrap__icon"><use href="#i-search" /></svg>
+                              <input class="ui-input ui-input--sm" type="search" placeholder="搜标题 / 公司 / 标签" aria-label="搜索经历" />
+                            </label>
+                            <div class="ui-chip-set">
+                              <button class="ui-chip ui-chip--accent" type="button" aria-pressed="true">全部 12</button>
+                              <button class="ui-chip" type="button">实习 5</button>
+                              <button class="ui-chip" type="button">项目 6</button>
+                              <button class="ui-chip" type="button">教育 2</button>
+                              <button class="ui-chip" type="button">校园 1</button>
+                              <button class="ui-chip" type="button">技能 3</button>
+                            </div>
+                            <span class="grow"></span>
+                            <span class="small muted">按更新时间排序</span>
+                          </div>
+                          <div class="pkg-grid">
+                            <article class="pkg-card is-active">
+                              <div class="pkg-card__top"><div class="stack" style="gap: 2px; min-width: 0"><span class="pkg-card__title">增长实验平台 · 数据分析实习</span><span class="pkg-card__org">示例科技 · 数据组</span></div></div>
+                              <div class="pkg-card__meta"><span class="ui-badge ui-badge--success">已核实 3</span><span class="pkg-card__time">2026-03 ~ 2026-09</span></div>
+                              <p class="pkg-card__summary">归因分析、实验设计、周报自动化；4 条事实，7 条表述变体。</p>
+                              <div class="ui-chip-set pkg-card__tags"><span class="ui-badge ui-badge--outline">SQL</span><span class="ui-badge ui-badge--outline">A/B 测试</span><span class="ui-badge ui-badge--outline">归因</span></div>
+                              <div class="pkg-card__foot"><span class="pkg-card__count">4 事实 · 7 变体</span><span class="grow"></span><span class="ui-badge">最近 10-21</span></div>
+                            </article>
+                            <article class="pkg-card">
+                              <div class="pkg-card__top"><div class="stack" style="gap: 2px; min-width: 0"><span class="pkg-card__title">推荐策略迭代 · 算法项目</span><span class="pkg-card__org">课程项目 · 3 人组</span></div></div>
+                              <div class="pkg-card__meta"><span class="ui-badge ui-badge--warn">待核实 2</span><span class="pkg-card__time">2025-09 ~ 2026-01</span></div>
+                              <p class="pkg-card__summary">召回与排序两阶段，离线指标与线上 A/B 的差异分析。</p>
+                              <div class="pkg-card__foot"><span class="pkg-card__count">3 事实 · 5 变体</span><span class="grow"></span><span class="ui-badge">最近 10-14</span></div>
+                            </article>
+                            <article class="pkg-card">
+                              <div class="pkg-card__top"><div class="stack" style="gap: 2px; min-width: 0"><span class="pkg-card__title">校园数据分析比赛 · 队长</span><span class="pkg-card__org">校赛 · 二等奖</span></div></div>
+                              <div class="pkg-card__meta"><span class="ui-badge ui-badge--success">已核实 2</span><span class="pkg-card__time">2025-03 ~ 2025-05</span></div>
+                              <p class="pkg-card__summary">给 4 人分工、定指标口径，负责最终答辩的数据故事线。</p>
+                              <div class="pkg-card__foot"><span class="pkg-card__count">2 事实 · 4 变体</span><span class="grow"></span><span class="ui-badge">最近 09-30</span></div>
+                            </article>
+                            <article class="pkg-card is-sample">
+                              <div class="pkg-card__top"><div class="stack" style="gap: 2px; min-width: 0"><span class="pkg-card__title">示例：一份实习经历长什么样</span><span class="pkg-card__org">只读示例</span></div></div>
+                              <div class="pkg-card__meta"><span class="ui-badge ui-badge--outline">示例</span></div>
+                              <p class="pkg-card__summary">看结构，不要抄内容：事实是怎么被拆成可核实短句的。</p>
+                              <div class="pkg-card__foot"><span class="pkg-card__count">3 事实 · 3 变体</span></div>
+                            </article>
+                          </div>
+                        </div>
+                        <aside class="drawer" aria-label="经历详情">
+                          <div class="drawer__head">
+                            <div class="stack" style="gap: 2px">
+                              <h2 class="drawer__title">增长实验平台 · 数据分析实习</h2>
+                              <span class="small muted">示例科技 · 数据组 · 2026-03 ~ 2026-09</span>
+                            </div>
+                            <button class="ui-btn ui-btn--quiet ui-btn--sm ui-btn--icon" type="button" aria-label="关闭"><svg class="ico ico--sm"><use href="#i-x" /></svg></button>
+                          </div>
+                          <div class="drawer__body">
+                            <div class="bullet-group">
+                              <div class="bullet-group__head"><span class="bullet-group__key">增长归因</span><span class="ui-badge ui-badge--success">已核实</span></div>
+                              <div class="bullet-group__cols">
+                                <div class="variant is-verified"><div class="variant__head"><span class="ui-badge">结果导向</span></div><div class="variant__text">搭建渠道归因模型，定位到 2 个低效投放位，季度节省 18% 预算。</div><div class="variant__foot"><span class="small muted">92 字</span><span class="grow"></span><button class="ui-btn ui-btn--quiet ui-btn--sm" type="button">复制</button></div></div>
+                                <div class="variant is-verified"><div class="variant__head"><span class="ui-badge">技术细节</span></div><div class="variant__text">用 SQL + Python 实现多触点归因（马尔可夫链），替代原有末次点击口径。</div><div class="variant__foot"><span class="small muted">88 字</span><span class="grow"></span><button class="ui-btn ui-btn--quiet ui-btn--sm" type="button">复制</button></div></div>
+                                <div class="variant"><div class="variant__head"><span class="ui-badge ui-badge--warn">ATS</span></div><div class="variant__text">归因分析 / A/B 测试 / SQL / Python / 预算优化 / 转化率提升。</div><div class="variant__foot"><span class="small muted">46 字</span></div></div>
+                              </div>
+                            </div>
+                            <div class="bullet-group">
+                              <div class="bullet-group__head"><span class="bullet-group__key">实验设计</span><span class="ui-badge ui-badge--success">已核实</span></div>
+                              <div class="bullet-group__cols">
+                                <div class="variant"><div class="variant__head"><span class="ui-badge">结果导向</span></div><div class="variant__text">设计 6 组 A/B 实验（n≈42,000），把注册转化率从 3.1% 提到 4.4%。</div><div class="variant__foot"><span class="small muted">74 字</span></div></div>
+                                <div class="variant"><div class="variant__head"><span class="ui-badge">精简</span></div><div class="variant__text">6 组 A/B 实验，转化率 3.1% → 4.4%。</div><div class="variant__foot"><span class="small muted">26 字</span></div></div>
+                              </div>
+                            </div>
+                          </div>
+                          <div class="drawer__foot">
+                            <button class="ui-btn ui-btn--primary ui-btn--sm" type="button">加入组装</button>
+                            <button class="ui-btn ui-btn--ghost ui-btn--sm" type="button">编辑经历</button>
+                          </div>
+                        </aside>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="pv-notes">
+            <div class="pv-note"><h4>交互流程</h4><p>卡片列表 → 右侧 560px 抽屉。抽屉正文按 bullet_key 分组，每组横向排列变体（结果导向 / 技术细节 / 协作领导 / 精简 / ATS）；已核实为实线边，未核实为虚线 + 文字标记。</p></div>
+            <div class="pv-note"><h4>空态</h4><p>「还没有经历」+ 两个入口（对话录入 / 导入简历）；示例卡常驻列表末尾，标「示例」且置灰，避免被误当自己的内容。</p></div>
+            <div class="pv-note"><h4>错误态</h4><p>保存冲突返回 CONFLICT → 抽屉顶部出现「这条经历已被改动」并给「载入最新」；删除需二次确认，且提示会影响哪些已导出文件（只提示，不阻断）。</p></div>
+            <div class="pv-note"><h4>键盘</h4><p>列表可用 ↑/↓ 移动焦点，Enter 打开抽屉，Esc 关闭并回到原卡片。拖拽排序必须同时提供「上移/下移」按钮。</p></div>
+          </div>
+        </article>
+
+        <!-- ================= 03 简历导入与模板拆解 ================= -->
+        <article class="pv-screen">
+          <div class="pv-screen__label">
+            <span class="pv-screen__no">03</span>
+            <span class="pv-screen__name">简历导入与模板拆解</span>
+            <span class="pv-screen__route">#/templates · 导入第 3 步「校对结构」</span>
+          </div>
+          <div class="pv-frame pv-frame--auto">
+            <div class="app">
+              <header class="app__statusbar" role="status">
+                <span class="status-item" title="本地运行：数据与文件都保存在这台机器上"><i class="status-dot status-dot--ok"></i><span class="status-local">127.0.0.1:52341</span><span class="small">本地</span></span>
+                <i class="status-sep" aria-hidden="true"></i>
+                <span class="status-item"><i class="status-dot status-dot--ok"></i>DeepSeek 已就绪</span>
+                <i class="status-sep" aria-hidden="true"></i>
+                <span class="status-item"><i class="status-dot status-dot--ok"></i>中文字体可用</span>
+                <span class="app__statusbar__right"><span class="status-item">导入不会联网</span></span>
+              </header>
+              <div class="app__body">
+                <nav class="sidenav" aria-label="主导航">
+                  <div class="sidenav__brand"><span class="sidenav__brand-mark" aria-hidden="true">RW</span><span class="sidenav__brand-text"><span class="sidenav__brand-name">简历仓库</span><span class="sidenav__brand-sub">本地 · 离线优先</span></span></div>
+                  <div class="sidenav__list">
+                    <div class="sidenav__group-label">工作</div>
+                    <a class="sidenav__item" href="#/workbench"><svg class="ico" aria-hidden="true"><use href="#i-dashboard"/></svg><span class="sidenav__label">工作台</span></a>
+                    <a class="sidenav__item" href="#/warehouse"><svg class="ico" aria-hidden="true"><use href="#i-warehouse"/></svg><span class="sidenav__label">经历库</span><span class="sidenav__count">12</span></a>
+                    <a class="sidenav__item is-active" href="#/templates" aria-current="page"><svg class="ico" aria-hidden="true"><use href="#i-template"/></svg><span class="sidenav__label">模板</span><span class="sidenav__count">4</span></a>
+                    <a class="sidenav__item" href="#/jobs"><svg class="ico" aria-hidden="true"><use href="#i-target"/></svg><span class="sidenav__label">目标职位</span><span class="sidenav__count">3</span></a>
+                    <a class="sidenav__item" href="#/builds"><svg class="ico" aria-hidden="true"><use href="#i-layers"/></svg><span class="sidenav__label">组装导出</span></a>
+                    <div class="sidenav__group-label">本地数据</div>
+                    <a class="sidenav__item" href="#/profile"><svg class="ico" aria-hidden="true"><use href="#i-user"/></svg><span class="sidenav__label">个人资料</span></a>
+                    <a class="sidenav__item" href="#/settings"><svg class="ico" aria-hidden="true"><use href="#i-settings"/></svg><span class="sidenav__label">设置</span></a>
+                  </div>
+                  <div class="sidenav__footer"><button class="sidenav__collapse" type="button"><svg class="ico" style="width:14px;height:14px" aria-hidden="true"><use href="#i-chevron-left"/></svg><span class="sidenav__label">收起</span></button></div>
+                </nav>
+                <div class="main">
+                  <div class="topbar">
+                    <nav class="topbar__crumbs" aria-label="面包屑"><span class="topbar__crumb">模板</span><span aria-hidden="true">/</span><span class="topbar__crumb is-current" aria-current="page">导入并拆解</span></nav>
+                    <div class="topbar__right"><span class="small muted">草稿已自动保存 · 09:41</span></div>
+                  </div>
+                  <div class="main__scroll">
+                    <div class="page page--wide">
+                      <div class="page__head">
+                        <div class="page__head-text">
+                          <h1 class="page__title">校对结构 <span class="ui-badge ui-badge--warn">2 处待确认</span></h1>
+                          <p class="page__desc">左边是原件，右边是拆出来的章节 / 条目 / 要点。点任一处另一边会亮；改名、合并、拆分、换章节都在这里做完，再入库。</p>
+                        </div>
+                        <div class="page__actions">
+                          <button class="ui-btn ui-btn--quiet" type="button">取消导入</button>
+                        </div>
+                      </div>
+
+                      <div class="draft-banner" role="status">
+                        <span class="draft-banner__icon"><svg class="ico" aria-hidden="true"><use href="#i-edit"/></svg></span>
+                        <span class="draft-banner__main"><b>这是草稿，还没有入库。</b><span class="draft-banner__sub">改动已自动保存在本机（09:41）· 点「确认入库」后才写入经历库与模板库</span></span>
+                        <span class="draft-banner__actions"><button class="ui-btn ui-btn--quiet ui-btn--sm" type="button">预览将生成的模板</button><button class="ui-btn ui-btn--ghost ui-btn--sm" type="button">放弃草稿</button></span>
+                      </div>
+
+                      <div class="import-steps" role="list" aria-label="导入进度：第 3 步，共 4 步">
+                        <span class="import-step is-done" role="listitem"><span class="import-step__num" aria-hidden="true">✓</span>选择文件</span>
+                        <i class="import-step__line" aria-hidden="true"></i>
+                        <span class="import-step is-done" role="listitem"><span class="import-step__num" aria-hidden="true">✓</span>解析内容</span>
+                        <i class="import-step__line" aria-hidden="true"></i>
+                        <span class="import-step is-current" role="listitem" aria-current="step"><span class="import-step__num" aria-hidden="true">3</span>校对结构</span>
+                        <i class="import-step__line" aria-hidden="true"></i>
+                        <span class="import-step" role="listitem"><span class="import-step__num" aria-hidden="true">4</span>确认入库</span>
+                      </div>
+
+                      <div class="review-summary" role="list" aria-label="解析结果统计">
+                        <span class="review-summary__cell" role="listitem"><b>5</b><span>章节</span></span>
+                        <span class="review-summary__cell" role="listitem"><b>6</b><span>条目</span></span>
+                        <span class="review-summary__cell" role="listitem"><b>11</b><span>要点</span></span>
+                        <span class="review-summary__cell is-accent" role="listitem"><b>47</b><span>数字（逐字保留）</span></span>
+                        <span class="review-summary__cell is-warn" role="listitem"><b>2</b><span>待确认</span></span>
+                      </div>
+
+                      <div class="split--review" style="grid-template-columns:minmax(0,1fr) 470px">
+                        <div class="stack" style="min-width:0">
+                          <div class="row" style="justify-content:space-between">
+                            <span class="small muted">第 1 页 / 共 1 页 · 44 行 · 逐字保留原文</span>
+                            <span class="row" style="gap:4px">
+                              <button class="ui-btn ui-btn--ghost ui-btn--sm" type="button">缩小</button>
+                              <button class="ui-btn ui-btn--ghost ui-btn--sm" type="button">放大</button>
+                            </span>
+                          </div>
+                          <div class="pdf-frame">
+                            <div class="pdf-page" aria-label="简历原文第 1 页">
+                              <div class="row" style="justify-content:space-between;align-items:flex-start">
+                                <div class="stack" style="gap:6px;flex:1">
+                                  <div class="pdf-page__line" style="width:38%;height:12px"></div>
+                                  <div class="pdf-page__line" style="width:62%"></div>
+                                  <div class="pdf-page__line" style="width:48%"></div>
+                                </div>
+                                <div style="width:52px;height:52px;border-radius:3px;background:var(--c-surface-3);border:1px dashed var(--c-border-strong)"></div>
+                              </div>
+                              <div style="height:10px"></div>
+                              <div class="pdf-page__line" style="width:34%;height:9px"></div>
+                              <div class="pdf-page__line"></div>
+                              <div class="pdf-page__line"></div>
+                              <div class="pdf-page__line pdf-page__highlight" title="对应右侧「示例科技 · 数据分析实习」的第一条要点"></div>
+                              <div class="pdf-page__line pdf-page__line--sm"></div>
+                              <div style="height:10px"></div>
+                              <div class="pdf-page__line" style="width:30%;height:9px"></div>
+                              <div class="pdf-page__line"></div>
+                              <div class="pdf-page__line pdf-page__line--sm"></div>
+                              <div class="pdf-page__line" style="width:72%"></div>
+                            </div>
+                            <p class="small muted">原文页图由服务端渲染；点右侧任一块，这里对应的段落会高亮。</p>
+                          </div>
+                          <div class="ui-callout ui-callout--info">
+                            <div class="ui-callout__head"><svg class="ico" aria-hidden="true"><use href="#i-info"/></svg><span class="ui-callout__title">原文提取干净：cid 残留 0、替换字符 0，47 个数字逐字保留</span></div>
+                            <div class="ui-callout__body">PDF 里的字形索引（cid）与 U+FFFD 一处都没有出现。唯一被拿走的是右上角那张 266×266 px 的照片：它单独存成文件，不参与文字解析，也不写进 PDF 的文字层。</div>
+                          </div>
+                        </div>
+
+                        <div class="stack" style="min-width:0">
+                          <div class="anomaly-list" role="list" aria-label="解析异常">
+                            <div class="anomaly anomaly--info" role="listitem">
+                              <svg class="ico" aria-hidden="true"><use href="#i-info"/></svg>
+                              <span class="anomaly__main"><span class="anomaly__title">检测到 1 张照片（266×266 px），已剥离为独立文件</span><span class="anomaly__detail">照片不进文字层、不参与解析，入库存为附件；导出时由「包含照片」开关决定是否放回右上角。</span><span class="anomaly__where">附件：photo_01.png</span></span>
+                              <button class="ui-btn ui-btn--ghost ui-btn--sm" type="button">查看</button>
+                            </div>
+                            <div class="anomaly anomaly--warn" role="listitem">
+                              <svg class="ico" aria-hidden="true"><use href="#i-alert-triangle"/></svg>
+                              <span class="anomaly__main"><span class="anomaly__title">3 条要点置信度低于 0.8（0.72 / 0.74 / 0.66）</span><span class="anomaly__detail">多半是原文里数字密集或换行折行导致的切分偏差；点「定位」跳到对应块，核对数字有没有被拆到两句里。</span><span class="anomaly__where">项目经历 × 3</span></span>
+                              <button class="ui-btn ui-btn--ghost ui-btn--sm" type="button">定位</button>
+                            </div>
+                          </div>
+
+                          <div class="block-tree block-tree--nested" role="tree" aria-label="简历结构：章节 / 条目 / 要点">
+<section class="tree-section" aria-label="教育背景"><header class="tree-section__head" role="treeitem" aria-level="1" aria-expanded="true" tabindex="0"><button class="ui-btn ui-btn--ghost ui-btn--sm ui-btn--icon" type="button" aria-label="收起本章节"><svg class="ico" aria-hidden="true"><use href="#i-chevron-down"/></svg></button><span class="tree-section__icon"><svg class="ico" aria-hidden="true"><use href="#i-template"/></svg></span><span class="tree-section__title">教育背景</span><span class="ui-badge ui-badge--outline">1 条 · 2 段整段</span><span class="conf conf--hi"><i></i>0.92</span><span class="grow"></span><span class="tree-section__actions"><button class="ui-btn ui-btn--ghost ui-btn--sm ui-btn--icon" type="button" aria-label="重命名章节"><svg class="ico" aria-hidden="true"><use href="#i-edit"/></svg></button><button class="ui-btn ui-btn--ghost ui-btn--sm ui-btn--icon" type="button" aria-label="合并到其它章节"><svg class="ico" aria-hidden="true"><use href="#i-merge"/></svg></button><button class="ui-btn ui-btn--ghost ui-btn--sm ui-btn--icon" type="button" aria-label="加一段"><svg class="ico" aria-hidden="true"><use href="#i-plus"/></svg></button><button class="ui-btn ui-btn--ghost ui-btn--sm ui-btn--icon" type="button" aria-label="删除章节"><svg class="ico" aria-hidden="true"><use href="#i-trash"/></svg></button></span></header><div class="tree-section__body"><div class="tree-entry" role="group"><div class="tree-entry__head" role="treeitem" aria-level="2" tabindex="0"><span class="tree-entry__handle"><svg class="ico" style="width:13px;height:13px"><use href="#i-grip"/></svg></span><span class="tree-entry__main"><span class="tree-entry__title">示例大学 · 管理学（商业数据分析）</span><span class="tree-entry__meta">2022.09 – 2026.06 · 本科 · 管理学（商业数据分析）</span></span><span class="conf conf--hi"><i></i>0.88</span><span class="tree-entry__actions"><button class="ui-btn ui-btn--ghost ui-btn--sm ui-btn--icon" type="button" aria-label="重命名条目"><svg class="ico" aria-hidden="true"><use href="#i-edit"/></svg></button><button class="ui-btn ui-btn--ghost ui-btn--sm ui-btn--icon" type="button" aria-label="移动到其它章节"><svg class="ico" aria-hidden="true"><use href="#i-folder"/></svg></button><button class="ui-btn ui-btn--ghost ui-btn--sm ui-btn--icon" type="button" aria-label="拆分条目"><svg class="ico" aria-hidden="true"><use href="#i-split"/></svg></button><button class="ui-btn ui-btn--ghost ui-btn--sm ui-btn--icon" type="button" aria-label="删除条目"><svg class="ico" aria-hidden="true"><use href="#i-trash"/></svg></button></span></div><div class="tree-entry__facts" role="group"><div class="tree-fact" role="treeitem" aria-level="3" tabindex="-1"><span class="tree-fact__tag">整段 1</span><span class="tree-fact__text">专业成绩：GPA <mark class="num">3.72</mark>/<mark class="num">4</mark>、加权均分 <mark class="num">88.6</mark>/<mark class="num">100</mark>、CET<mark class="num">4</mark> <mark class="num">561</mark>、CET<mark class="num">6</mark> <mark class="num">507</mark></span><span class="tree-fact__meta"><i class="num-dot is-ok" aria-hidden="true"></i>8 个数字 · 不拆 bullet</span><span class="tree-bullet__actions"><button class="ui-btn ui-btn--ghost ui-btn--sm ui-btn--icon" type="button" aria-label="编辑要点"><svg class="ico" aria-hidden="true"><use href="#i-edit"/></svg></button><button class="ui-btn ui-btn--ghost ui-btn--sm ui-btn--icon" type="button" aria-label="拆成两条要点"><svg class="ico" aria-hidden="true"><use href="#i-split"/></svg></button><button class="ui-btn ui-btn--ghost ui-btn--sm ui-btn--icon" type="button" aria-label="删除这条要点"><svg class="ico" aria-hidden="true"><use href="#i-trash"/></svg></button></span></div><div class="tree-fact" role="treeitem" aria-level="3" tabindex="-1"><span class="tree-fact__tag">整段 2</span><span class="tree-fact__text">主修课程：统计学(<mark class="num">93</mark>)、数据分析与处理（R）(<mark class="num">91</mark>)、社会经济调查理论方法与实践(<mark class="num">90</mark>)、数据结构与程序设计（Python）(<mark class="num">89</mark>)、数据库系统原理（SQL）(<mark class="num">89</mark>)、管理学(<mark class="num">88</mark>)、企业战略管理(<mark class="num">88</mark>)</span><span class="tree-fact__meta"><i class="num-dot is-ok" aria-hidden="true"></i>7 个数字 · 不拆 bullet</span><span class="tree-bullet__actions"><button class="ui-btn ui-btn--ghost ui-btn--sm ui-btn--icon" type="button" aria-label="编辑要点"><svg class="ico" aria-hidden="true"><use href="#i-edit"/></svg></button><button class="ui-btn ui-btn--ghost ui-btn--sm ui-btn--icon" type="button" aria-label="拆成两条要点"><svg class="ico" aria-hidden="true"><use href="#i-split"/></svg></button><button class="ui-btn ui-btn--ghost ui-btn--sm ui-btn--icon" type="button" aria-label="删除这条要点"><svg class="ico" aria-hidden="true"><use href="#i-trash"/></svg></button></span></div><p class="tree-entry__fact-note">教育段的「专业成绩」「主修课程」在原简历里是<b>整段文字</b>，这里整段保留、不拆成 bullet；导出时按一个自然段排在教育条目下（行首不加「·」）。</p></div></div></div></section>
+<section class="tree-section" aria-label="实习经历"><header class="tree-section__head" role="treeitem" aria-level="1" aria-expanded="true" tabindex="0"><button class="ui-btn ui-btn--ghost ui-btn--sm ui-btn--icon" type="button" aria-label="收起本章节"><svg class="ico" aria-hidden="true"><use href="#i-chevron-down"/></svg></button><span class="tree-section__icon"><svg class="ico" aria-hidden="true"><use href="#i-warehouse"/></svg></span><span class="tree-section__title">实习经历</span><span class="ui-badge ui-badge--outline">1 条 · 3 点</span><span class="conf conf--hi"><i></i>0.86</span><span class="grow"></span><span class="tree-section__actions"><button class="ui-btn ui-btn--ghost ui-btn--sm ui-btn--icon" type="button" aria-label="重命名章节"><svg class="ico" aria-hidden="true"><use href="#i-edit"/></svg></button><button class="ui-btn ui-btn--ghost ui-btn--sm ui-btn--icon" type="button" aria-label="合并到其它章节"><svg class="ico" aria-hidden="true"><use href="#i-merge"/></svg></button><button class="ui-btn ui-btn--ghost ui-btn--sm ui-btn--icon" type="button" aria-label="加一条"><svg class="ico" aria-hidden="true"><use href="#i-plus"/></svg></button><button class="ui-btn ui-btn--ghost ui-btn--sm ui-btn--icon" type="button" aria-label="删除章节"><svg class="ico" aria-hidden="true"><use href="#i-trash"/></svg></button></span></header><div class="tree-section__body"><div class="tree-entry" role="group"><div class="tree-entry__head is-active" role="treeitem" aria-level="2" tabindex="0"><span class="tree-entry__handle"><svg class="ico" style="width:13px;height:13px"><use href="#i-grip"/></svg></span><span class="tree-entry__main"><span class="tree-entry__title">示例科技 · 数据分析实习生</span><span class="tree-entry__meta">2026.07 – 2026.10 · 数据组 · 杭州</span></span><span class="conf conf--hi"><i></i>0.86</span><span class="tree-entry__actions"><button class="ui-btn ui-btn--ghost ui-btn--sm ui-btn--icon" type="button" aria-label="重命名条目"><svg class="ico" aria-hidden="true"><use href="#i-edit"/></svg></button><button class="ui-btn ui-btn--ghost ui-btn--sm ui-btn--icon" type="button" aria-label="移动到其它章节"><svg class="ico" aria-hidden="true"><use href="#i-folder"/></svg></button><button class="ui-btn ui-btn--ghost ui-btn--sm ui-btn--icon" type="button" aria-label="拆分条目"><svg class="ico" aria-hidden="true"><use href="#i-split"/></svg></button><button class="ui-btn ui-btn--ghost ui-btn--sm ui-btn--icon" type="button" aria-label="删除条目"><svg class="ico" aria-hidden="true"><use href="#i-trash"/></svg></button></span></div><div class="tree-entry__bullets" role="group"><div class="tree-bullet" role="treeitem" aria-level="3" tabindex="-1"><span class="tree-bullet__handle" aria-hidden="true"><svg class="ico" style="width:12px;height:12px"><use href="#i-grip"/></svg></span><span class="tree-bullet__text">独立负责 <mark class="num">2020.01</mark>–<mark class="num">2025.12</mark> 共 <mark class="num">6 年</mark>、<mark class="num">2200</mark> 余天的 <mark class="num">17 项</mark>逐日环境指标全链路治理，覆盖温湿度、PM₁/PM₂.₅/PM₁₀ 等 <mark class="num">6 项</mark>污染物及 <mark class="num">4</mark> 类衍生指标。</span><span class="tree-bullet__meta"><i class="num-dot is-ok" aria-hidden="true"></i>7 个数字 <span class="conf conf--hi"><i></i>0.86</span></span><span class="tree-bullet__actions"><button class="ui-btn ui-btn--ghost ui-btn--sm ui-btn--icon" type="button" aria-label="编辑要点"><svg class="ico" aria-hidden="true"><use href="#i-edit"/></svg></button><button class="ui-btn ui-btn--ghost ui-btn--sm ui-btn--icon" type="button" aria-label="拆成两条要点"><svg class="ico" aria-hidden="true"><use href="#i-split"/></svg></button><button class="ui-btn ui-btn--ghost ui-btn--sm ui-btn--icon" type="button" aria-label="删除这条要点"><svg class="ico" aria-hidden="true"><use href="#i-trash"/></svg></button></span></div><div class="tree-bullet is-active" role="treeitem" aria-level="3" tabindex="-1"><span class="tree-bullet__handle" aria-hidden="true"><svg class="ico" style="width:12px;height:12px"><use href="#i-grip"/></svg></span><span class="tree-bullet__text">通过 AI 检索定位 <mark class="num">3 个</mark>开源环境数据平台，申请 API 批量采集，完成异常值修正、缺失值插补与 PM₁ 估算，单表入库 <mark class="num">12.4 万</mark>行。</span><span class="tree-bullet__meta"><i class="num-dot is-ok" aria-hidden="true"></i>2 个数字 <span class="conf conf--hi"><i></i>0.86</span></span><span class="tree-bullet__actions"><button class="ui-btn ui-btn--ghost ui-btn--sm ui-btn--icon" type="button" aria-label="编辑要点"><svg class="ico" aria-hidden="true"><use href="#i-edit"/></svg></button><button class="ui-btn ui-btn--ghost ui-btn--sm ui-btn--icon" type="button" aria-label="拆成两条要点"><svg class="ico" aria-hidden="true"><use href="#i-split"/></svg></button><button class="ui-btn ui-btn--ghost ui-btn--sm ui-btn--icon" type="button" aria-label="删除这条要点"><svg class="ico" aria-hidden="true"><use href="#i-trash"/></svg></button></span></div><div class="tree-bullet" role="treeitem" aria-level="3" tabindex="-1"><span class="tree-bullet__handle" aria-hidden="true"><svg class="ico" style="width:12px;height:12px"><use href="#i-grip"/></svg></span><span class="tree-bullet__text">依据标准换算公式把全量臭氧数据从 <mark class="num">8 小时</mark>滑动平均统一为 <mark class="num">24 小时</mark>平均口径，交付完整率 <mark class="num">99.7%</mark>、口径一致性 <mark class="num">100%</mark> 的数据集，一次性通过项目审核。</span><span class="tree-bullet__meta"><i class="num-dot is-ok" aria-hidden="true"></i>4 个数字 <span class="conf conf--hi"><i></i>0.86</span></span><span class="tree-bullet__actions"><button class="ui-btn ui-btn--ghost ui-btn--sm ui-btn--icon" type="button" aria-label="编辑要点"><svg class="ico" aria-hidden="true"><use href="#i-edit"/></svg></button><button class="ui-btn ui-btn--ghost ui-btn--sm ui-btn--icon" type="button" aria-label="拆成两条要点"><svg class="ico" aria-hidden="true"><use href="#i-split"/></svg></button><button class="ui-btn ui-btn--ghost ui-btn--sm ui-btn--icon" type="button" aria-label="删除这条要点"><svg class="ico" aria-hidden="true"><use href="#i-trash"/></svg></button></span></div></div></div></div></section>
+<section class="tree-section" aria-label="项目经历"><header class="tree-section__head" role="treeitem" aria-level="1" aria-expanded="true" tabindex="0"><button class="ui-btn ui-btn--ghost ui-btn--sm ui-btn--icon" type="button" aria-label="收起本章节"><svg class="ico" aria-hidden="true"><use href="#i-chevron-down"/></svg></button><span class="tree-section__icon"><svg class="ico" aria-hidden="true"><use href="#i-layers"/></svg></span><span class="tree-section__title">项目经历</span><span class="ui-badge ui-badge--outline">3 条 · 6 点</span><span class="conf conf--mid"><i></i>0.74</span><span class="grow"></span><span class="tree-section__actions"><button class="ui-btn ui-btn--ghost ui-btn--sm ui-btn--icon" type="button" aria-label="重命名章节"><svg class="ico" aria-hidden="true"><use href="#i-edit"/></svg></button><button class="ui-btn ui-btn--ghost ui-btn--sm ui-btn--icon" type="button" aria-label="合并到其它章节"><svg class="ico" aria-hidden="true"><use href="#i-merge"/></svg></button><button class="ui-btn ui-btn--ghost ui-btn--sm ui-btn--icon" type="button" aria-label="加一条"><svg class="ico" aria-hidden="true"><use href="#i-plus"/></svg></button><button class="ui-btn ui-btn--ghost ui-btn--sm ui-btn--icon" type="button" aria-label="删除章节"><svg class="ico" aria-hidden="true"><use href="#i-trash"/></svg></button></span></header><div class="tree-section__body"><div class="tree-entry" role="group"><div class="tree-entry__head" role="treeitem" aria-level="2" tabindex="0"><span class="tree-entry__handle"><svg class="ico" style="width:13px;height:13px"><use href="#i-grip"/></svg></span><span class="tree-entry__main"><span class="tree-entry__title">竞速类游戏版本 A/B 测试对照分析</span><span class="tree-entry__meta">2026.09 – 2026.10 · 队长 · 3 人</span></span><span class="conf conf--mid"><i></i>0.72</span><span class="tree-entry__actions"><button class="ui-btn ui-btn--ghost ui-btn--sm ui-btn--icon" type="button" aria-label="重命名条目"><svg class="ico" aria-hidden="true"><use href="#i-edit"/></svg></button><button class="ui-btn ui-btn--ghost ui-btn--sm ui-btn--icon" type="button" aria-label="移动到其它章节"><svg class="ico" aria-hidden="true"><use href="#i-folder"/></svg></button><button class="ui-btn ui-btn--ghost ui-btn--sm ui-btn--icon" type="button" aria-label="拆分条目"><svg class="ico" aria-hidden="true"><use href="#i-split"/></svg></button><button class="ui-btn ui-btn--ghost ui-btn--sm ui-btn--icon" type="button" aria-label="删除条目"><svg class="ico" aria-hidden="true"><use href="#i-trash"/></svg></button></span></div><div class="tree-entry__bullets" role="group"><div class="tree-bullet" role="treeitem" aria-level="3" tabindex="-1"><span class="tree-bullet__handle" aria-hidden="true"><svg class="ico" style="width:12px;height:12px"><use href="#i-grip"/></svg></span><span class="tree-bullet__text">为验证广告变现策略，开展三版本 A/B 对照测试：基于 <mark class="num">6,527 条</mark>行为数据双层清洗，用 IPW 逆概率加权校正样本失衡，构建 <mark class="num">1,220 人</mark>标准化数据集，统一人均局数与渗透率口径。</span><span class="tree-bullet__meta"><i class="num-dot is-ok" aria-hidden="true"></i>2 个数字 <span class="conf conf--mid"><i></i>0.72</span></span><span class="tree-bullet__actions"><button class="ui-btn ui-btn--ghost ui-btn--sm ui-btn--icon" type="button" aria-label="编辑要点"><svg class="ico" aria-hidden="true"><use href="#i-edit"/></svg></button><button class="ui-btn ui-btn--ghost ui-btn--sm ui-btn--icon" type="button" aria-label="拆成两条要点"><svg class="ico" aria-hidden="true"><use href="#i-split"/></svg></button><button class="ui-btn ui-btn--ghost ui-btn--sm ui-btn--icon" type="button" aria-label="删除这条要点"><svg class="ico" aria-hidden="true"><use href="#i-trash"/></svg></button></span></div><div class="tree-bullet" role="treeitem" aria-level="3" tabindex="-1"><span class="tree-bullet__handle" aria-hidden="true"><svg class="ico" style="width:12px;height:12px"><use href="#i-grip"/></svg></span><span class="tree-bullet__text">用广告增量瀑布分解与关卡留存漏斗定位机制，结合显著性检验与最小样本量校验，确认 v<mark class="num">2 人</mark>均广告 +<mark class="num">39.3%</mark>（p=<mark class="num">0.018</mark>），输出完整 AB 复盘报告。</span><span class="tree-bullet__meta"><i class="num-dot is-ok" aria-hidden="true"></i>3 个数字 <span class="conf conf--mid"><i></i>0.72</span></span><span class="tree-bullet__actions"><button class="ui-btn ui-btn--ghost ui-btn--sm ui-btn--icon" type="button" aria-label="编辑要点"><svg class="ico" aria-hidden="true"><use href="#i-edit"/></svg></button><button class="ui-btn ui-btn--ghost ui-btn--sm ui-btn--icon" type="button" aria-label="拆成两条要点"><svg class="ico" aria-hidden="true"><use href="#i-split"/></svg></button><button class="ui-btn ui-btn--ghost ui-btn--sm ui-btn--icon" type="button" aria-label="删除这条要点"><svg class="ico" aria-hidden="true"><use href="#i-trash"/></svg></button></span></div></div></div><div class="tree-entry" role="group"><div class="tree-entry__head" role="treeitem" aria-level="2" tabindex="0"><span class="tree-entry__handle"><svg class="ico" style="width:13px;height:13px"><use href="#i-grip"/></svg></span><span class="tree-entry__main"><span class="tree-entry__title">社区超市门店选址与订单量预测（商业分析赛）</span><span class="tree-entry__meta">2026.03 – 2026.04 · 队员</span></span><span class="conf conf--hi"><i></i>0.83</span><span class="tree-entry__actions"><button class="ui-btn ui-btn--ghost ui-btn--sm ui-btn--icon" type="button" aria-label="重命名条目"><svg class="ico" aria-hidden="true"><use href="#i-edit"/></svg></button><button class="ui-btn ui-btn--ghost ui-btn--sm ui-btn--icon" type="button" aria-label="移动到其它章节"><svg class="ico" aria-hidden="true"><use href="#i-folder"/></svg></button><button class="ui-btn ui-btn--ghost ui-btn--sm ui-btn--icon" type="button" aria-label="拆分条目"><svg class="ico" aria-hidden="true"><use href="#i-split"/></svg></button><button class="ui-btn ui-btn--ghost ui-btn--sm ui-btn--icon" type="button" aria-label="删除条目"><svg class="ico" aria-hidden="true"><use href="#i-trash"/></svg></button></span></div><div class="tree-entry__bullets" role="group"><div class="tree-bullet" role="treeitem" aria-level="3" tabindex="-1"><span class="tree-bullet__handle" aria-hidden="true"><svg class="ico" style="width:12px;height:12px"><use href="#i-grip"/></svg></span><span class="tree-bullet__text">整合 <mark class="num">49</mark> 家门店多维运营数据，对比 <mark class="num">12</mark> 种回归模型后选定 Ridge 回归搭建订单预测模型，同步建立四维度选址评分体系与开店阈值规则。</span><span class="tree-bullet__meta"><i class="num-dot is-ok" aria-hidden="true"></i>2 个数字 <span class="conf conf--hi"><i></i>0.83</span></span><span class="tree-bullet__actions"><button class="ui-btn ui-btn--ghost ui-btn--sm ui-btn--icon" type="button" aria-label="编辑要点"><svg class="ico" aria-hidden="true"><use href="#i-edit"/></svg></button><button class="ui-btn ui-btn--ghost ui-btn--sm ui-btn--icon" type="button" aria-label="拆成两条要点"><svg class="ico" aria-hidden="true"><use href="#i-split"/></svg></button><button class="ui-btn ui-btn--ghost ui-btn--sm ui-btn--icon" type="button" aria-label="删除这条要点"><svg class="ico" aria-hidden="true"><use href="#i-trash"/></svg></button></span></div><div class="tree-bullet" role="treeitem" aria-level="3" tabindex="-1"><span class="tree-bullet__handle" aria-hidden="true"><svg class="ico" style="width:12px;height:12px"><use href="#i-grip"/></svg></span><span class="tree-bullet__text">通过特征筛选与稳定性验证量化关键因子，把模型转成可直接使用的决策工具，依托 AI Agent 完成测算，输出报告形成落地闭环。</span><span class="tree-bullet__meta"><i class="num-dot is-risk" aria-hidden="true"></i>0 个数字 <span class="conf conf--hi"><i></i>0.83</span></span><span class="tree-bullet__actions"><button class="ui-btn ui-btn--ghost ui-btn--sm ui-btn--icon" type="button" aria-label="编辑要点"><svg class="ico" aria-hidden="true"><use href="#i-edit"/></svg></button><button class="ui-btn ui-btn--ghost ui-btn--sm ui-btn--icon" type="button" aria-label="拆成两条要点"><svg class="ico" aria-hidden="true"><use href="#i-split"/></svg></button><button class="ui-btn ui-btn--ghost ui-btn--sm ui-btn--icon" type="button" aria-label="删除这条要点"><svg class="ico" aria-hidden="true"><use href="#i-trash"/></svg></button></span></div></div></div><div class="tree-entry" role="group"><div class="tree-entry__head" role="treeitem" aria-level="2" tabindex="0"><span class="tree-entry__handle"><svg class="ico" style="width:13px;height:13px"><use href="#i-grip"/></svg></span><span class="tree-entry__main"><span class="tree-entry__title">品牌策划竞赛 · 消费者调研赛道</span><span class="tree-entry__meta">2025.11 – 2026.01 · 队长</span></span><span class="conf conf--mid"><i></i>0.66</span><span class="tree-entry__actions"><button class="ui-btn ui-btn--ghost ui-btn--sm ui-btn--icon" type="button" aria-label="重命名条目"><svg class="ico" aria-hidden="true"><use href="#i-edit"/></svg></button><button class="ui-btn ui-btn--ghost ui-btn--sm ui-btn--icon" type="button" aria-label="移动到其它章节"><svg class="ico" aria-hidden="true"><use href="#i-folder"/></svg></button><button class="ui-btn ui-btn--ghost ui-btn--sm ui-btn--icon" type="button" aria-label="拆分条目"><svg class="ico" aria-hidden="true"><use href="#i-split"/></svg></button><button class="ui-btn ui-btn--ghost ui-btn--sm ui-btn--icon" type="button" aria-label="删除条目"><svg class="ico" aria-hidden="true"><use href="#i-trash"/></svg></button></span></div><div class="tree-entry__bullets" role="group"><div class="tree-bullet" role="treeitem" aria-level="3" tabindex="-1"><span class="tree-bullet__handle" aria-hidden="true"><svg class="ico" style="width:12px;height:12px"><use href="#i-grip"/></svg></span><span class="tree-bullet__text">主导消费者调研全流程：设计覆盖品类认知、消费行为、健康需求、场景偏好 <mark class="num">4</mark> 大维度 <mark class="num">28</mark> 题问卷，回收有效样本 <mark class="num">500</mark>+，有效回收率 <mark class="num">92.3%</mark>。</span><span class="tree-bullet__meta"><i class="num-dot is-ok" aria-hidden="true"></i>4 个数字 <span class="conf conf--mid"><i></i>0.66</span></span><span class="tree-bullet__actions"><button class="ui-btn ui-btn--ghost ui-btn--sm ui-btn--icon" type="button" aria-label="编辑要点"><svg class="ico" aria-hidden="true"><use href="#i-edit"/></svg></button><button class="ui-btn ui-btn--ghost ui-btn--sm ui-btn--icon" type="button" aria-label="拆成两条要点"><svg class="ico" aria-hidden="true"><use href="#i-split"/></svg></button><button class="ui-btn ui-btn--ghost ui-btn--sm ui-btn--icon" type="button" aria-label="删除这条要点"><svg class="ico" aria-hidden="true"><use href="#i-trash"/></svg></button></span></div><div class="tree-bullet" role="treeitem" aria-level="3" tabindex="-1"><span class="tree-bullet__handle" aria-hidden="true"><svg class="ico" style="width:12px;height:12px"><use href="#i-grip"/></svg></span><span class="tree-bullet__text">用 SPSS 完成信效度检验、交叉分析与 K-means 聚类，划分 <mark class="num">4</mark> 类核心客群、定位 <mark class="num">6</mark> 大市场机会点，<mark class="num">12 项</mark>结论落地品牌全案，获校级二等奖。</span><span class="tree-bullet__meta"><i class="num-dot is-ok" aria-hidden="true"></i>3 个数字 <span class="conf conf--mid"><i></i>0.66</span></span><span class="tree-bullet__actions"><button class="ui-btn ui-btn--ghost ui-btn--sm ui-btn--icon" type="button" aria-label="编辑要点"><svg class="ico" aria-hidden="true"><use href="#i-edit"/></svg></button><button class="ui-btn ui-btn--ghost ui-btn--sm ui-btn--icon" type="button" aria-label="拆成两条要点"><svg class="ico" aria-hidden="true"><use href="#i-split"/></svg></button><button class="ui-btn ui-btn--ghost ui-btn--sm ui-btn--icon" type="button" aria-label="删除这条要点"><svg class="ico" aria-hidden="true"><use href="#i-trash"/></svg></button></span></div></div></div></div></section>
+<section class="tree-section" aria-label="校园活动"><header class="tree-section__head" role="treeitem" aria-level="1" aria-expanded="true" tabindex="0"><button class="ui-btn ui-btn--ghost ui-btn--sm ui-btn--icon" type="button" aria-label="收起本章节"><svg class="ico" aria-hidden="true"><use href="#i-chevron-down"/></svg></button><span class="tree-section__icon"><svg class="ico" aria-hidden="true"><use href="#i-user"/></svg></span><span class="tree-section__title">校园活动</span><span class="ui-badge ui-badge--outline">1 条 · 2 点</span><span class="conf conf--mid"><i></i>0.74</span><span class="grow"></span><span class="tree-section__actions"><button class="ui-btn ui-btn--ghost ui-btn--sm ui-btn--icon" type="button" aria-label="重命名章节"><svg class="ico" aria-hidden="true"><use href="#i-edit"/></svg></button><button class="ui-btn ui-btn--ghost ui-btn--sm ui-btn--icon" type="button" aria-label="合并到其它章节"><svg class="ico" aria-hidden="true"><use href="#i-merge"/></svg></button><button class="ui-btn ui-btn--ghost ui-btn--sm ui-btn--icon" type="button" aria-label="加一条"><svg class="ico" aria-hidden="true"><use href="#i-plus"/></svg></button><button class="ui-btn ui-btn--ghost ui-btn--sm ui-btn--icon" type="button" aria-label="删除章节"><svg class="ico" aria-hidden="true"><use href="#i-trash"/></svg></button></span></header><div class="tree-section__body"><div class="tree-entry" role="group"><div class="tree-entry__head" role="treeitem" aria-level="2" tabindex="0"><span class="tree-entry__handle"><svg class="ico" style="width:13px;height:13px"><use href="#i-grip"/></svg></span><span class="tree-entry__main"><span class="tree-entry__title">示例大学 · 学习委员</span><span class="tree-entry__meta">2024.09 – 至今</span></span><span class="conf conf--mid"><i></i>0.74</span><span class="tree-entry__actions"><button class="ui-btn ui-btn--ghost ui-btn--sm ui-btn--icon" type="button" aria-label="重命名条目"><svg class="ico" aria-hidden="true"><use href="#i-edit"/></svg></button><button class="ui-btn ui-btn--ghost ui-btn--sm ui-btn--icon" type="button" aria-label="移动到其它章节"><svg class="ico" aria-hidden="true"><use href="#i-folder"/></svg></button><button class="ui-btn ui-btn--ghost ui-btn--sm ui-btn--icon" type="button" aria-label="拆分条目"><svg class="ico" aria-hidden="true"><use href="#i-split"/></svg></button><button class="ui-btn ui-btn--ghost ui-btn--sm ui-btn--icon" type="button" aria-label="删除条目"><svg class="ico" aria-hidden="true"><use href="#i-trash"/></svg></button></span></div><div class="tree-entry__bullets" role="group"><div class="tree-bullet" role="treeitem" aria-level="3" tabindex="-1"><span class="tree-bullet__handle" aria-hidden="true"><svg class="ico" style="width:12px;height:12px"><use href="#i-grip"/></svg></span><span class="tree-bullet__text">荣誉：<mark class="num">2024</mark>–<mark class="num">2025</mark> 学年院级社会活动积极分子；校级情景剧大赛三等奖（团队 <mark class="num">8 人</mark>）。</span><span class="tree-bullet__meta"><i class="num-dot is-ok" aria-hidden="true"></i>3 个数字 <span class="conf conf--hi"><i></i>0.81</span><span class="ui-badge ui-badge--outline">荣誉 · 默认显示</span></span><span class="tree-bullet__actions"><button class="ui-btn ui-btn--ghost ui-btn--sm ui-btn--icon" type="button" aria-label="编辑要点"><svg class="ico" aria-hidden="true"><use href="#i-edit"/></svg></button><button class="ui-btn ui-btn--ghost ui-btn--sm ui-btn--icon" type="button" aria-label="拆成两条要点"><svg class="ico" aria-hidden="true"><use href="#i-split"/></svg></button><button class="ui-btn ui-btn--ghost ui-btn--sm ui-btn--icon" type="button" aria-label="删除这条要点"><svg class="ico" aria-hidden="true"><use href="#i-trash"/></svg></button></span></div><div class="tree-bullet" role="treeitem" aria-level="3" tabindex="-1"><span class="tree-bullet__handle" aria-hidden="true"><svg class="ico" style="width:12px;height:12px"><use href="#i-grip"/></svg></span><span class="tree-bullet__text">主要活动：协办第 <mark class="num">31</mark> 届案例分析大赛（技术组）、樱花开放期志愿者（累计 <mark class="num">42 小时</mark>）、赴英国剑桥 AI & 金融实训项目负责人。</span><span class="tree-bullet__meta"><i class="num-dot is-ok" aria-hidden="true"></i>2 个数字 <span class="conf conf--mid"><i></i>0.74</span></span><span class="tree-bullet__actions"><button class="ui-btn ui-btn--ghost ui-btn--sm ui-btn--icon" type="button" aria-label="编辑要点"><svg class="ico" aria-hidden="true"><use href="#i-edit"/></svg></button><button class="ui-btn ui-btn--ghost ui-btn--sm ui-btn--icon" type="button" aria-label="拆成两条要点"><svg class="ico" aria-hidden="true"><use href="#i-split"/></svg></button><button class="ui-btn ui-btn--ghost ui-btn--sm ui-btn--icon" type="button" aria-label="删除这条要点"><svg class="ico" aria-hidden="true"><use href="#i-trash"/></svg></button></span></div></div><div class="honor-row"><span class="honor-row__main"><span class="honor-row__title">荣誉与奖项</span><span class="honor-row__sub small muted">作为「校园活动」下的一条要点显示，不单独成节；关掉只是隐藏，不会从经历库删除。</span></span><button class="ui-switch" type="button" role="switch" aria-checked="true" aria-label="显示荣誉要点"><span class="ui-switch__track"><span class="ui-switch__thumb"></span></span></button></div></div></div></section>
+<section class="tree-section" aria-label="职业技能"><header class="tree-section__head" role="treeitem" aria-level="1" aria-expanded="true" tabindex="0"><button class="ui-btn ui-btn--ghost ui-btn--sm ui-btn--icon" type="button" aria-label="收起本章节"><svg class="ico" aria-hidden="true"><use href="#i-chevron-down"/></svg></button><span class="tree-section__icon"><svg class="ico" aria-hidden="true"><use href="#i-sparkles"/></svg></span><span class="tree-section__title">职业技能</span><span class="ui-badge ui-badge--outline">0 条 · 3 行</span><span class="conf conf--hi"><i></i>0.90</span><span class="grow"></span><span class="tree-section__actions"><button class="ui-btn ui-btn--ghost ui-btn--sm ui-btn--icon" type="button" aria-label="重命名章节"><svg class="ico" aria-hidden="true"><use href="#i-edit"/></svg></button><button class="ui-btn ui-btn--ghost ui-btn--sm ui-btn--icon" type="button" aria-label="合并到其它章节"><svg class="ico" aria-hidden="true"><use href="#i-merge"/></svg></button><button class="ui-btn ui-btn--ghost ui-btn--sm ui-btn--icon" type="button" aria-label="加一行"><svg class="ico" aria-hidden="true"><use href="#i-plus"/></svg></button><button class="ui-btn ui-btn--ghost ui-btn--sm ui-btn--icon" type="button" aria-label="删除章节"><svg class="ico" aria-hidden="true"><use href="#i-trash"/></svg></button></span></header><div class="tree-section__body"><div class="skill-lines"><div class="skill-lines__head"><span class="small muted">技能按原文逐行保留，不拆成标签、不用竖线分隔；匹配只做行级标记。</span></div><div class="skill-line is-hit"><span class="skill-line__handle" aria-hidden="true"><svg class="ico" style="width:13px;height:13px"><use href="#i-grip"/></svg></span><span class="skill-line__main"><span class="skill-line__text">数据分析类：掌握Python、R、SQL等编程语言，可独立进行数据清洗、统计分析与可视化处理</span><span class="skill-line__match"><span class="ui-badge ui-badge--accent">命中 JD：Python</span><span class="ui-badge ui-badge--accent">命中 JD：SQL</span></span></span></div><div class="skill-line is-hit"><span class="skill-line__handle" aria-hidden="true"><svg class="ico" style="width:13px;height:13px"><use href="#i-grip"/></svg></span><span class="skill-line__main"><span class="skill-line__text">基础办公类：掌握Excel的数据透视表、VLOOKUP函数等常用工具，可以快速上手工作</span><span class="skill-line__match"><span class="ui-badge ui-badge--accent">命中 JD：Excel</span></span></span></div><div class="skill-line"><span class="skill-line__handle" aria-hidden="true"><svg class="ico" style="width:13px;height:13px"><use href="#i-grip"/></svg></span><span class="skill-line__main"><span class="skill-line__text">AI开发类：可以借助AI Agent对重复性数据挖掘工作进行自动化，提升处理效率</span></span></div></div></div></section>
+</div>
+                          <p class="small muted">置信度 ≥0.8 高 / 0.6–0.8 中 / &lt;0.6 低：点、颜色、数字三者同时表达，不只靠颜色。每块右侧动作：改名 / 合并 / 拆分 / 移到其它章节 / 删除。</p>
+                        </div>
+                      </div>
+
+                      <div class="review-foot">
+                        <span class="review-foot__note"><i class="status-dot status-dot--warn" aria-hidden="true"></i>2 条提醒：照片已剥离成独立文件、3 条要点置信度低于 0.8。都不阻断入库，建议先扫一眼数字。</span>
+                        <span class="review-foot__actions"><button class="ui-btn ui-btn--ghost" type="button">放弃</button><button class="ui-btn ui-btn--primary" type="button"><svg class="ico" aria-hidden="true"><use href="#i-check"/></svg>确认入库</button></span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="pv-notes">
+            <div class="pv-note"><h4>交互流程</h4><p>投放 / 点选文件 → 解析 → 校对：改 section 名、entry 名，合并 / 拆分 / 拖入其它 section / 删除，每步都只改草稿（<span class="mono">ImportJob.draft_json</span>）；点「确认入库」才写入经历库与模板库。前三步可随时后退。</p></div>
+            <div class="pv-note"><h4>空态</h4><p>未上传时右栏是「还没解析出结构」空态，左栏是虚线投放区 + 支持格式说明；模板库无模板时给「先用示例模板起个草稿」。</p></div>
+            <div class="pv-note"><h4>异常不静默</h4><p>乱码字符 U+FFFD、(cid:127) 字形索引、缺 section、条目 0 要点、疑似丢数字，全部进「异常区」并给定位 / 修复动作；低置信度块标黄标红，未确认前不写入模板库。</p></div>
+            <div class="pv-note"><h4>键盘</h4><p>Tab 进树，↑/↓ 移动、Enter 选中、⌥↑/⌥↓ 调序（拖拽之外的第二条路径）；焦点在要点上 ⌘Enter 编辑、⌫ 删除（可撤销）；Esc 退出导入并提示草稿已存。</p></div>
+          </div>
+        </article>
+
+        <!-- ================= 04 目标职位与公司分析 ================= -->
+        <article class="pv-screen">
+          <div class="pv-screen__label">
+            <span class="pv-screen__no">04</span>
+            <span class="pv-screen__name">目标职位与公司分析</span>
+            <span class="pv-screen__route">#/jobs · 选中「数据分析实习生 · 示例科技」</span>
+          </div>
+          <div class="pv-frame">
+            <div class="app">
+              <header class="app__statusbar" role="status">
+                <span class="status-item" title="本地运行"><i class="status-dot status-dot--ok"></i><span class="status-local">127.0.0.1:52341</span><span class="small">本地</span></span>
+                <i class="status-sep" aria-hidden="true"></i>
+                <span class="status-item"><i class="status-dot status-dot--ok"></i>DeepSeek 已就绪</span>
+                <i class="status-sep" aria-hidden="true"></i>
+                <span class="status-item"><i class="status-dot status-dot--ok"></i>中文字体可用</span>
+                <span class="app__statusbar__right"><span class="status-item">本次分析将发送 1 个字段</span></span>
+              </header>
+              <div class="app__body">
+                <nav class="sidenav" aria-label="主导航">
+                  <div class="sidenav__brand"><span class="sidenav__brand-mark" aria-hidden="true">RW</span><span class="sidenav__brand-text"><span class="sidenav__brand-name">简历仓库</span><span class="sidenav__brand-sub">本地 · 离线优先</span></span></div>
+                  <div class="sidenav__list">
+                    <div class="sidenav__group-label">工作</div>
+                    <a class="sidenav__item" href="#/workbench"><svg class="ico" aria-hidden="true"><use href="#i-dashboard"/></svg><span class="sidenav__label">工作台</span></a>
+                    <a class="sidenav__item" href="#/warehouse"><svg class="ico" aria-hidden="true"><use href="#i-warehouse"/></svg><span class="sidenav__label">经历库</span><span class="sidenav__count">12</span></a>
+                    <a class="sidenav__item" href="#/templates"><svg class="ico" aria-hidden="true"><use href="#i-template"/></svg><span class="sidenav__label">模板</span><span class="sidenav__count">4</span></a>
+                    <a class="sidenav__item is-active" href="#/jobs" aria-current="page"><svg class="ico" aria-hidden="true"><use href="#i-target"/></svg><span class="sidenav__label">目标职位</span><span class="sidenav__count">3</span></a>
+                    <a class="sidenav__item" href="#/builds"><svg class="ico" aria-hidden="true"><use href="#i-layers"/></svg><span class="sidenav__label">组装导出</span></a>
+                    <div class="sidenav__group-label">本地数据</div>
+                    <a class="sidenav__item" href="#/profile"><svg class="ico" aria-hidden="true"><use href="#i-user"/></svg><span class="sidenav__label">个人资料</span></a>
+                    <a class="sidenav__item" href="#/settings"><svg class="ico" aria-hidden="true"><use href="#i-settings"/></svg><span class="sidenav__label">设置</span></a>
+                  </div>
+                  <div class="sidenav__footer"><button class="sidenav__collapse" type="button"><svg class="ico" style="width:14px;height:14px" aria-hidden="true"><use href="#i-chevron-left"/></svg><span class="sidenav__label">收起</span></button></div>
+                </nav>
+                <div class="main">
+                  <div class="topbar">
+                    <nav class="topbar__crumbs" aria-label="面包屑"><span class="topbar__crumb">目标职位</span><span aria-hidden="true">/</span><span class="topbar__crumb is-current" aria-current="page">数据分析实习生</span></nav>
+                    <div class="topbar__right"><button class="ui-btn ui-btn--ghost ui-btn--sm" type="button">重新分析</button></div>
+                  </div>
+                  <div class="main__scroll">
+                    <div class="page page--wide">
+                      <div class="split--jobs">
+                        <div class="stack">
+                          <div class="ui-input-wrap"><svg class="ico" aria-hidden="true"><use href="#i-search"/></svg><input class="ui-input" type="search" placeholder="搜索职位或公司" value=""></div>
+                          <button class="pick-row is-on" type="button" aria-current="true"><span class="pick-row__main"><span class="pick-row__title">数据分析实习生</span><span class="pick-row__meta">示例科技<span>覆盖 68%</span></span></span><span class="pick-row__meta">9</span></button>
+                          <button class="pick-row" type="button"><span class="pick-row__main"><span class="pick-row__title">增长运营实习生</span><span class="pick-row__meta">另一家示例公司<span>覆盖 41%</span></span></span><span class="pick-row__meta">7</span></button>
+                          <button class="pick-row" type="button"><span class="pick-row__main"><span class="pick-row__title">产品数据实习</span><span class="pick-row__meta">第三家示例公司<span>覆盖 52%</span></span></span><span class="pick-row__meta">11</span></button>
+                          <button class="ui-btn ui-btn--secondary ui-btn--block" type="button"><svg class="ico" aria-hidden="true"><use href="#i-plus"/></svg>粘贴新 JD</button>
+                        </div>
+
+                        <div class="stack">
+                          <div class="row" style="justify-content:space-between;align-items:flex-start">
+                            <div class="stack" style="gap:4px">
+                              <h3 class="ui-section__title">数据分析实习生 · 示例科技</h3>
+                              <div class="badge-row"><span class="ui-badge">互联网 · 电商</span><span class="ui-badge ui-badge--outline">JD 1,842 字</span><span class="ui-badge ui-badge--outline">分析于 09:22</span></div>
+                            </div>
+                          </div>
+
+                          <div class="grid grid--2">
+                            <div class="ui-card ui-card--pad">
+                              <div class="row" style="gap:var(--sp-7);align-items:center">
+                                <div class="ring" role="img" aria-label="技能覆盖率 68%" style="--ring-value:68">
+                                  <div class="ring__inner"><span class="ring__value">68%</span><span class="ring__label">技能覆盖</span><span class="ring__label">按权重加权</span></div>
+                                </div>
+                                <div class="stack grow">
+                                  <div class="small muted">必须项覆盖 5/7，优先项 2/3</div>
+                                  <div class="small">缺口集中在「SQL 窗口函数」与「A/B 实验设计」。</div>
+                                  <button class="ui-btn ui-btn--ghost ui-btn--sm" type="button" style="align-self:flex-start">去经历库补事实</button>
+                                </div>
+                              </div>
+                            </div>
+                            <div class="ui-card ui-card--pad">
+                              <div class="ui-section__title" style="font-size:var(--fs-14)">公司偏好（来自 JD 文本）</div>
+                              <div class="mini-list" style="margin-top:var(--sp-4)">
+                                <div class="mini-list__row"><span class="mini-list__main">强调「数据驱动决策」，要求能独立写分析结论</span></div>
+                                <div class="mini-list__row"><span class="mini-list__main">团队 6 人，实习期 6 个月起，每周到岗 4 天</span></div>
+                                <div class="mini-list__row"><span class="mini-list__main">技术栈：SQL / Python / Tableau</span></div>
+                              </div>
+                              <p class="small muted" style="margin-top:var(--sp-4)">只引用 JD 原文，不做推测；每条可点开查看原文位置。</p>
+                            </div>
+                          </div>
+
+                          <div class="ui-card">
+                            <div class="ui-section__head">
+                              <h4 class="ui-section__title">需求矩阵</h4>
+                              <div class="ui-section__actions"><span class="small muted">缺口 4 项 · 已覆盖 9 项</span></div>
+                            </div>
+                            <table class="req-table">
+                              <thead><tr><th scope="col">技能 / 要求</th><th scope="col">类别</th><th scope="col">优先级</th><th scope="col">权重</th><th scope="col">命中经历</th></tr></thead>
+                              <tbody>
+                                <tr><td><span class="req-table__skill">SQL 窗口函数<span class="ui-badge ui-badge--danger">缺口</span></span></td><td><span class="small muted">工具</span></td><td><span class="ui-badge ui-badge--danger">必须</span></td><td><span class="weight"><span class="weight__track"><span class="weight__fill" style="width:100%"></span></span><span class="weight__val">100%</span></span></td><td><span class="mono small">0</span><span class="small muted"> 条</span></td></tr>
+                                <tr><td><span class="req-table__skill">A/B 实验设计<span class="ui-badge ui-badge--success">已覆盖</span></span></td><td><span class="small muted">方法</span></td><td><span class="ui-badge ui-badge--danger">必须</span></td><td><span class="weight"><span class="weight__track"><span class="weight__fill" style="width:90%"></span></span><span class="weight__val">90%</span></span></td><td><span class="mono small">2</span><span class="small muted"> 条</span></td></tr>
+                                <tr><td><span class="req-table__skill">Python 数据处理<span class="ui-badge ui-badge--success">已覆盖</span></span></td><td><span class="small muted">工具</span></td><td><span class="ui-badge ui-badge--danger">必须</span></td><td><span class="weight"><span class="weight__track"><span class="weight__fill" style="width:80%"></span></span><span class="weight__val">80%</span></span></td><td><span class="mono small">3</span><span class="small muted"> 条</span></td></tr>
+                                <tr><td><span class="req-table__skill">指标体系搭建<span class="ui-badge ui-badge--success">已覆盖</span></span></td><td><span class="small muted">能力</span></td><td><span class="ui-badge ui-badge--warn">优先</span></td><td><span class="weight"><span class="weight__track"><span class="weight__fill" style="width:60%"></span></span><span class="weight__val">60%</span></span></td><td><span class="mono small">1</span><span class="small muted"> 条</span></td></tr>
+                                <tr><td><span class="req-table__skill">Tableau 可视化<span class="ui-badge ui-badge--warn">缺口</span></span></td><td><span class="small muted">工具</span></td><td><span class="ui-badge ui-badge--warn">优先</span></td><td><span class="weight"><span class="weight__track"><span class="weight__fill" style="width:45%"></span></span><span class="weight__val">45%</span></span></td><td><span class="mono small">0</span><span class="small muted"> 条</span></td></tr>
+                                <tr><td><span class="req-table__skill">英文读写<span class="ui-badge ui-badge--success">已覆盖</span></span></td><td><span class="small muted">语言</span></td><td><span class="ui-badge">加分</span></td><td><span class="weight"><span class="weight__track"><span class="weight__fill" style="width:30%"></span></span><span class="weight__val">30%</span></span></td><td><span class="mono small">2</span><span class="small muted"> 条</span></td></tr>
+                              </tbody>
+                            </table>
+                          </div>
+
+                          <div class="ui-details">
+                            <summary>分析来源（1）</summary>
+                            <div class="ui-details__body">
+                              <div class="mini-list"><div class="mini-list__row"><span class="mini-list__main small">粘贴的 JD 原文</span><span class="mini-list__meta">09:22</span></div></div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="pv-notes">
+            <div class="pv-note"><h4>交互流程</h4><p>粘贴 JD + 公司名 → 隐私确认弹层（只发 JD 原文这一个字段）→ 分析出需求矩阵与公司偏好。点「缺口」直接跳经历库新建事实；覆盖率每次改动后重算。</p></div>
+            <div class="pv-note"><h4>空态</h4><p>没有任何职位时，右栏是空态 +「粘贴第一份 JD」；只有 JD 没有公司名时，公司偏好卡显示「信息不足，不做推测」而不是编内容。</p></div>
+            <div class="pv-note"><h4>错误态</h4><p>JD 太短 → JD_TOO_SHORT 提示补全职责与要求；LLM 失败 → 保留原文与手动编辑入口，需求矩阵可手填，功能不整体不可用。</p></div>
+            <div class="pv-note"><h4>键盘</h4><p>J / K 在职位列表上下切换，Enter 打开详情；表格可用 Tab 顺序浏览，优先级徽标本身是筛选按钮（可键盘触发）。</p></div>
+          </div>
+        </article>
+
+        <!-- ================= 05 组装与导出预览 ================= -->
+        <article class="pv-screen">
+          <div class="pv-screen__label">
+            <span class="pv-screen__no">05</span>
+            <span class="pv-screen__name">组装与导出预览</span>
+            <span class="pv-screen__route">#/builds/new · 中文 · 示例科技 · 数据分析实习生</span>
+          </div>
+          <div class="pv-frame" style="height:1500px">
+            <div class="app" style="height:1500px">
+              <header class="app__statusbar" role="status">
+                <span class="status-item" title="本地运行"><i class="status-dot status-dot--ok"></i><span class="status-local">127.0.0.1:52341</span><span class="small">本地</span></span>
+                <i class="status-sep" aria-hidden="true"></i>
+                <span class="status-item"><i class="status-dot status-dot--ok"></i>DeepSeek 已就绪</span>
+                <i class="status-sep" aria-hidden="true"></i>
+                <span class="status-item"><i class="status-dot status-dot--ok"></i>中文字体可用</span>
+                <span class="app__statusbar__right"><span class="status-item">本次导出不会联网</span></span>
+              </header>
+              <div class="app__body">
+                <nav class="sidenav" aria-label="主导航">
+                  <div class="sidenav__brand"><span class="sidenav__brand-mark" aria-hidden="true">RW</span><span class="sidenav__brand-text"><span class="sidenav__brand-name">简历仓库</span><span class="sidenav__brand-sub">本地 · 离线优先</span></span></div>
+                  <div class="sidenav__list">
+                    <div class="sidenav__group-label">工作</div>
+                    <a class="sidenav__item" href="#/workbench"><svg class="ico" aria-hidden="true"><use href="#i-dashboard"/></svg><span class="sidenav__label">工作台</span></a>
+                    <a class="sidenav__item" href="#/warehouse"><svg class="ico" aria-hidden="true"><use href="#i-warehouse"/></svg><span class="sidenav__label">经历库</span><span class="sidenav__count">12</span></a>
+                    <a class="sidenav__item" href="#/templates"><svg class="ico" aria-hidden="true"><use href="#i-template"/></svg><span class="sidenav__label">模板</span><span class="sidenav__count">4</span></a>
+                    <a class="sidenav__item" href="#/jobs"><svg class="ico" aria-hidden="true"><use href="#i-target"/></svg><span class="sidenav__label">目标职位</span><span class="sidenav__count">3</span></a>
+                    <a class="sidenav__item is-active" href="#/builds" aria-current="page"><svg class="ico" aria-hidden="true"><use href="#i-layers"/></svg><span class="sidenav__label">组装导出</span></a>
+                    <div class="sidenav__group-label">本地数据</div>
+                    <a class="sidenav__item" href="#/profile"><svg class="ico" aria-hidden="true"><use href="#i-user"/></svg><span class="sidenav__label">个人资料</span></a>
+                    <a class="sidenav__item" href="#/settings"><svg class="ico" aria-hidden="true"><use href="#i-settings"/></svg><span class="sidenav__label">设置</span></a>
+                  </div>
+                  <div class="sidenav__footer"><button class="sidenav__collapse" type="button"><svg class="ico" style="width:14px;height:14px" aria-hidden="true"><use href="#i-chevron-left"/></svg><span class="sidenav__label">收起</span></button></div>
+                </nav>
+                <div class="main">
+                  <div class="topbar">
+                    <nav class="topbar__crumbs" aria-label="面包屑"><span class="topbar__crumb">组装导出</span><span aria-hidden="true">/</span><span class="topbar__crumb is-current" aria-current="page">新组装</span></nav>
+                    <div class="topbar__right"><span class="small muted">自动保存于 10:06</span><button class="ui-btn ui-btn--ghost ui-btn--sm" type="button">另存为</button></div>
+                  </div>
+                  <div class="main__scroll">
+                    <div class="page page--wide">
+                      <div class="split--build">
+                        <!-- 左：选内容 -->
+                        <div class="build-side build-side--left">
+  <div class="row" style="justify-content:space-between;align-items:baseline">
+    <h2 class="ui-section__title">选择内容</h2>
+    <button class="ui-btn ui-btn--quiet ui-btn--sm" type="button">全选</button>
+  </div>
+  <div class="pick-hint small muted">按 JD 匹配度排序；勾掉的不进本次简历，但留在经历库。</div>
+  <div class="pick-scroll">
+    <div class="pick-group">
+      <div class="pick-group__head">实习经历<span class="pick-group__count">1/1</span></div>
+      <button class="pick-row is-on" type="button"><span class="pick-row__main"><span class="pick-row__title">示例科技 · 数据分析实习生</span><span class="pick-row__meta">2026.07 – 2026.10 · 3 个变体</span></span><span class="pick-row__match"><b>94</b><span>匹配</span></span><span class="pick-row__count">3</span></button>
+    </div>
+    <div class="pick-group">
+      <div class="pick-group__head">项目经历<span class="pick-group__count">2/3</span></div>
+      <button class="pick-row is-on" type="button"><span class="pick-row__main"><span class="pick-row__title">竞速类游戏版本 A/B 测试对照分析</span><span class="pick-row__meta">2026.09 – 2026.10 · 队长 · 3 个变体</span></span><span class="pick-row__match"><b>92</b><span>匹配</span></span><span class="pick-row__count">3</span></button>
+      <button class="pick-row is-on" type="button"><span class="pick-row__main"><span class="pick-row__title">社区超市门店选址与订单量预测</span><span class="pick-row__meta">2026.03 – 2026.04 · 队员 · 2 个变体</span></span><span class="pick-row__match"><b>84</b><span>匹配</span></span><span class="pick-row__count">2</span></button>
+      <button class="pick-row" type="button"><span class="pick-row__main"><span class="pick-row__title">品牌策划竞赛 · 消费者调研</span><span class="pick-row__meta">2025.11 – 2026.01 · 队长 · 2 个变体</span></span><span class="pick-row__match"><b>61</b><span>匹配</span></span><span class="pick-row__count">2</span></button>
+    </div>
+    <div class="pick-group">
+      <div class="pick-group__head">校园活动<span class="pick-group__count">1/1</span></div>
+      <button class="pick-row is-on" type="button"><span class="pick-row__main"><span class="pick-row__title">示例大学 · 学习委员（含荣誉）</span><span class="pick-row__meta">2024.09 – 至今 · 2 个变体</span></span><span class="pick-row__match"><b>73</b><span>匹配</span></span><span class="pick-row__count">2</span></button>
+    </div>
+  </div>
+  <div class="select-summary">
+    <span>已选 3 段经历 · 5 个变体</span>
+    <span class="mono">预计 1 / 1 页</span>
+  </div>
+</div>
+
+                        <!-- 中：实时预览 -->
+                        <div class="build-preview">
+                          <div class="build-preview__bar">
+                            <span class="ui-badge ui-badge--success">中文模板</span>
+                            <span class="small muted">单页 · A4</span>
+                            <span class="grow"></span>
+                            <span class="small muted">第 1 / 1 页</span>
+                          </div>
+                          <div class="build-preview__stage">
+                            <div class="build-preview__frame">
+                              <div class="doc doc--density-original"><div class="doc__header"><div class="doc__header-main"><h1 class="doc__name">陈思远</h1><div class="doc__headline">数据分析 · 2026 届本科 · 求职：数据分析实习生</div><div class="doc__contact"><span class="doc__contact-item">138****0000</span><span class="doc__contact-item">chen****@example.com</span><span class="doc__contact-item">示例大学 · 管理学（商业数据分析）</span><span class="doc__contact-item">可到岗：2026.11</span></div></div><div class="doc__photo doc__photo--ph">照片</div></div><div class="doc__section"><h2 class="doc__section-title">教育背景</h2><div class="doc__entry-head"><span class="doc__entry-title">示例大学 · 管理学（商业数据分析）</span><span class="doc__entry-date">2022.09 – 2026.06</span></div><p class="doc__fact">专业成绩：GPA <mark class="num">3.72</mark>/<mark class="num">4</mark>、加权均分 <mark class="num">88.6</mark>/<mark class="num">100</mark>、CET<mark class="num">4</mark> <mark class="num">561</mark>、CET<mark class="num">6</mark> <mark class="num">507</mark></p><p class="doc__fact">主修课程：统计学(<mark class="num">93</mark>)、数据分析与处理（R）(<mark class="num">91</mark>)、社会经济调查理论方法与实践(<mark class="num">90</mark>)、数据结构与程序设计（Python）(<mark class="num">89</mark>)、数据库系统原理（SQL）(<mark class="num">89</mark>)、管理学(<mark class="num">88</mark>)、企业战略管理(<mark class="num">88</mark>)</p></div><div class="doc__section"><h2 class="doc__section-title">实习经历</h2><div class="doc__entry-head"><span class="doc__entry-title">示例科技 · 数据分析实习生</span><span class="doc__entry-date">2026.07 – 2026.10</span></div><p class="doc__bullet">独立负责 <mark class="num">2020.01</mark>–<mark class="num">2025.12</mark> 共 <mark class="num">6</mark> 年、<mark class="num">2200</mark> 余天的 <mark class="num">17</mark> 项逐日环境指标全链路治理，覆盖温湿度、PM₁/PM₂.₅/PM₁₀ 等 <mark class="num">6</mark> 项污染物及 <mark class="num">4</mark> 类衍生指标。</p><p class="doc__bullet">通过 AI 检索定位 <mark class="num">3</mark> 个开源环境数据平台，申请 API 批量采集，完成异常值修正、缺失值插补与 PM₁ 估算，单表入库 <mark class="num">12.4</mark> 万行。</p><p class="doc__bullet">依据标准换算公式把全量臭氧数据从 <mark class="num">8</mark> 小时滑动平均统一为 <mark class="num">24</mark> 小时平均口径，交付完整率 <mark class="num">99.7</mark>%、口径一致性 <mark class="num">100</mark>% 的数据集，一次性通过审核。</p></div><div class="doc__section"><h2 class="doc__section-title">项目经历</h2><div class="doc__entry-head"><span class="doc__entry-title">竞速类游戏版本 A/B 测试对照分析</span><span class="doc__entry-date">2026.09 – 2026.10</span></div><p class="doc__bullet">为验证广告变现策略，开展三版本 A/B 对照测试：基于 <mark class="num">6,527</mark> 条行为数据双层清洗，用 IPW 逆概率加权校正样本失衡，构建 <mark class="num">1,220</mark> 人标准化数据集，统一人均局数与渗透率口径。</p><p class="doc__bullet">用广告增量瀑布分解与关卡留存漏斗定位机制，结合显著性检验与最小样本量校验，确认 v<mark class="num">2</mark> 人均广告 +<mark class="num">39.3</mark>%（p=<mark class="num">0.018</mark>），输出完整复盘报告。</p><div class="doc__entry-head"><span class="doc__entry-title">社区超市门店选址与订单量预测（商业分析赛）</span><span class="doc__entry-date">2026.03 – 2026.04</span></div><p class="doc__bullet">整合 <mark class="num">49</mark> 家门店多维运营数据，对比 <mark class="num">12</mark> 种回归模型后选定 Ridge 回归搭建订单预测模型，同步建立四维度选址评分体系与开店阈值规则。</p><p class="doc__bullet">通过特征筛选与稳定性验证量化关键因子，把模型转成可直接使用的决策工具，依托 AI Agent 完成测算，输出报告形成落地闭环。</p><div class="doc__entry-head"><span class="doc__entry-title">品牌策划竞赛 · 消费者调研赛道</span><span class="doc__entry-date">2025.11 – 2026.01</span></div><p class="doc__bullet">主导消费者调研全流程：设计覆盖品类认知、消费行为、健康需求、场景偏好 <mark class="num">4</mark> 大维度 <mark class="num">28</mark> 题问卷，回收有效样本 <mark class="num">500</mark>+，有效回收率 <mark class="num">92.3</mark>%。</p><p class="doc__bullet">用 SPSS 完成信效度检验、交叉分析与 K-means 聚类，划分 <mark class="num">4</mark> 类核心客群、定位 <mark class="num">6</mark> 大市场机会点，<mark class="num">12</mark> 项结论落地品牌全案，获校级二等奖。</p></div><div class="doc__section"><h2 class="doc__section-title">校园活动</h2><div class="doc__entry-head"><span class="doc__entry-title">示例大学 · 学习委员</span><span class="doc__entry-date">2024.09 – 至今</span></div><p class="doc__bullet">荣誉：<mark class="num">2024</mark>–<mark class="num">2025</mark> 学年院级社会活动积极分子；校级情景剧大赛三等奖（团队 <mark class="num">8</mark> 人）。</p><p class="doc__bullet">主要活动：协办第 <mark class="num">31</mark> 届案例分析大赛（技术组）、樱花开放期志愿者（累计 <mark class="num">42</mark> 小时）、赴英国剑桥 AI 与金融实训项目负责人。</p></div><div class="doc__section"><h2 class="doc__section-title">职业技能</h2><p class="doc__skill-line">数据分析类：掌握 Python、R、SQL 等编程语言，可独立进行数据清洗、统计分析与可视化处理</p><p class="doc__skill-line">基础办公类：掌握 Excel 的数据透视表、VLOOKUP 函数等常用工具，可以快速上手工作</p><p class="doc__skill-line">AI 开发类：可以借助 AI Agent 对重复性数据挖掘工作进行自动化，提升处理效率</p></div><div class="doc__footer">简历由本地工具生成 · 内容以经历库事实为准</div></div>>
+                            </div>
+                          </div>
+                          <div class="build-preview__bar">
+                            <span class="small muted">预览与 PDF 使用同一套模板；照片位固定在右上角 89.3×89.3pt。</span>
+                          </div>
+                        </div>
+
+                        <!-- 右：语言 / 模板 / 命名 / 照片 / 导出 -->
+                        <div class="build-side build-side--right">
+                          <div class="stack">
+                            <div class="row" style="justify-content:space-between;gap:var(--sp-4)">
+                              <div class="ui-field__label" style="margin:0">简历语言<span class="ui-field__note">决定姓名/学校取哪一列，以及用哪套模板</span></div>
+                              <div class="ui-seg" role="radiogroup" aria-label="简历语言">
+                                <button class="ui-seg__opt" type="button" role="radio" aria-checked="true">中文<span class="ui-seg__badge">中文模板</span></button>
+                                <button class="ui-seg__opt" type="button" role="radio" aria-checked="false">English<span class="ui-seg__badge">English 模板</span></button>
+                              </div>
+                            </div>
+                            <div class="naming__warn naming__warn--success"><svg class="ico" style="width:13px;height:13px" aria-hidden="true"><use href="#i-check-circle"/></svg>中文 模板所需字段齐全</div>
+
+                            <div class="stack" style="gap:var(--sp-3)">
+                              <div class="row" style="justify-content:space-between">
+                                <div class="ui-field__label" style="margin:0">模板</div>
+                                <button class="ui-btn ui-btn--quiet ui-btn--sm" type="button">管理模板</button>
+                              </div>
+                              <div class="row" style="gap:var(--sp-3)">
+                                <select class="ui-select"><option>中文 · 单页经典（默认）</option><option>中文 · 紧凑一页</option></select>
+                              </div>
+                              <div class="small muted">将使用「中文 · 单页经典」的章节顺序与字号；缺失槽位会以占位符标出。</div>
+                            </div>
+
+                            <div class="hr"></div>
+
+                            <div class="naming">
+                              <div class="row" style="justify-content:space-between;align-items:baseline">
+                                <div class="stack" style="gap:var(--sp-2)">
+                        <div class="row" style="justify-content:space-between"><div class="ui-field__label" style="margin:0">版式松紧</div><span class="small muted mono">预计 1 页</span></div>
+                        <div class="ui-seg ui-seg--block" role="radiogroup" aria-label="版式松紧">
+                          <button class="ui-seg__opt" type="button" role="radio" aria-checked="true">紧凑（与原简历一致，单页）</button>
+                          <button class="ui-seg__opt" type="button" role="radio" aria-checked="false">宽松（可能两页）</button>
+                        </div>
+                        <p class="density-note">页边距按你原来那份 PDF 来（上 8.3pt、左右 15pt 级），一页放得下；换成「宽松（可能两页）」四边留 15mm，观感舒展，篇幅长时会排到第 2 页。</p>
+                      </div>
+
+                      <div class="ui-field__label" style="margin:0">文件命名</div>
+                                <button class="ui-btn ui-btn--quiet ui-btn--sm" type="button">恢复默认</button>
+                              </div>
+                              <input class="ui-input ui-input--mono" value="{position}-{name}-{school}" aria-label="文件命名模板">
+                              <div class="naming__filename"><span class="naming__filename-label">本次文件名</span>数据分析实习生-陈思远-示例大学.pdf</div>
+                              <div class="naming__chips">
+                                <span class="ui-chip ui-chip--mono">position = 数据分析实习生</span>
+                                <span class="ui-chip ui-chip--mono">name = 陈思远</span>
+                                <span class="ui-chip ui-chip--mono">school = 示例大学</span>
+                              </div>
+                              <details class="naming__vars ui-details"><summary>变量取值与来源</summary><div class="ui-details__body">
+                                <div class="naming__var-row"><code>{position}</code><span>数据分析实习生</span><span class="muted">来自 目标职位</span></div>
+                                <div class="naming__var-row"><code>{name}</code><span>陈思远</span><span class="muted">来自 个人资料 · name_zh</span></div>
+                                <div class="naming__var-row"><code>{school}</code><span>示例大学</span><span class="muted">来自 个人资料 · school_zh</span></div>
+                              </div></details>
+                              <p class="small muted">默认模板 {position}-{name}-{school}；{name} 与 {school} 会按简历语言取对应列。</p>
+                            </div>
+
+                            <div class="hr"></div>
+
+                            <div class="stack" style="gap:var(--sp-3)">
+                              <div class="row" style="justify-content:space-between;align-items:center;gap:var(--sp-4)">
+                                <div class="ui-field__label" style="margin:0">包含照片<span class="ui-field__note">中文与英文模板都支持右上角照片位</span></div>
+                                <button class="ui-switch" type="button" role="switch" aria-checked="true" aria-label="包含照片"><span class="ui-switch__track"><span class="ui-switch__thumb"></span></span></button>
+                              </div>
+                              <div class="photo-pick">
+                                <span class="photo-pick__thumb" aria-hidden="true"><span class="ui-skel ui-skel--block" style="width:100%;height:100%;border-radius:4px"></span></span>
+                                <span class="stack grow" style="gap:2px">
+                                  <span class="small">将使用这张照片</span>
+                                  <span class="small muted">手动上传 · 600×800</span>
+                                </span>
+                                <button class="ui-btn ui-btn--ghost ui-btn--sm" type="button">更换</button>
+                              </div>
+                            </div>
+
+                            <div class="hr"></div>
+
+                            <div class="stack" style="gap:var(--sp-3)">
+                              <div class="row" style="justify-content:space-between;align-items:center;gap:var(--sp-4)">
+                                <div class="ui-field__label" style="margin:0">技能与课程<span class="ui-field__note">技能整行原文，不拆标签</span></div>
+                                <button class="ui-btn ui-btn--quiet ui-btn--sm" type="button"><svg class="ico ico--sm" aria-hidden="true"><use href="#i-refresh"/></svg>还原原序</button>
+                              </div>
+                              <div class="skill-lines">
+                                <div class="skill-line is-hit"><span class="skill-line__handle" aria-hidden="true"><svg class="ico" style="width:13px;height:13px"><use href="#i-grip"/></svg></span><span class="skill-line__main"><span class="skill-line__text">数据分析类：掌握Python、R、SQL等编程语言，可独立进行数据清洗、统计分析与可视化处理</span><span class="skill-line__match"><span class="ui-badge ui-badge--accent">命中 JD：Python</span><span class="ui-badge ui-badge--accent">命中 JD：SQL</span></span></span></div>
+                                <div class="skill-line"><span class="skill-line__handle" aria-hidden="true"><svg class="ico" style="width:13px;height:13px"><use href="#i-grip"/></svg></span><span class="skill-line__main"><span class="skill-line__text">基础办公类：掌握Excel的数据透视表、VLOOKUP函数等常用工具，可以快速上手工作</span></span></div>
+                                <div class="skill-line"><span class="skill-line__handle" aria-hidden="true"><svg class="ico" style="width:13px;height:13px"><use href="#i-grip"/></svg></span><span class="skill-line__main"><span class="skill-line__text">AI开发类：可以借助AI Agent对重复性数据挖掘工作进行自动化，提升处理效率</span></span></div>
+                              </div>
+                              <div class="small muted">命中只做行级标记；排序是整行移动，点「还原原序」立刻恢复原始顺序。文字一个字都不改。</div>
+                              <div class="course-trim">
+                                <div class="course-trim__row">
+                                  <span class="course-trim__main"><span class="course-trim__title">主修课程 · 7 门</span><span class="course-trim__sub small muted">默认全部保留，不按 JD 删课。</span></span>
+                                  <button class="ui-switch" type="button" role="switch" aria-checked="false" aria-label="按 JD 裁剪主修课程"><span class="ui-switch__track"><span class="ui-switch__thumb"></span></span></button>
+                                </div>
+                                <div class="course-trim__all small muted">全部保留：数理统计、回归分析、机器学习导论、抽样调查、Python 数据分析、数据库原理、计量经济学</div>
+                              </div>
+                            </div>
+
+                            <div class="export-box__foot">
+                              <button class="ui-btn ui-btn--primary ui-btn--lg ui-btn--block" type="button"><svg class="ico" aria-hidden="true"><use href="#i-download"/></svg>导出 PDF</button>
+                              <button class="ui-btn ui-btn--ghost ui-btn--block" type="button">仅预览（不导出）</button>
+                              <div class="export-box__hint">引擎：reportlab 4.5.1 · 导出前会再弹一次「将发送字段清单」</div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="pv-notes">
+            <div class="pv-note"><h4>语言与模板联动</h4><p>切到 English 时，姓名/学校自动改用 name_en / school_en，模板列表同步过滤为英文模板；若英文列缺失，右栏立刻出现黄色提示并禁用导出（不会回退用中文列拼英文名）。</p></div>
+            <div class="pv-note"><h4>命名预览</h4><p>命名结果来自 POST /api/v1/naming/validate（前端不自己拼名字）。缺学校时这里变红条 +「导出将因缺少学校而失败」+「去个人资料补齐」，导出按钮置灰。</p></div>
+            <div class="pv-note"><h4>照片开关</h4><p>默认开启；关闭后预览实时去掉右上角照片且其它版式不动。没有照片时开关置灰 +「未设置照片，将导出无照片版本 —— 不影响继续导出」。</p></div>
+            <div class="pv-note"><h4>技能整行原文</h4><p>技能不拆 tag、不用竖线：中栏样张逐行排原文（数据分析类／基础办公类／AI开发类），右栏只加「命中 JD」行级徽章与整行排序，排序可一键还原；「按 JD 裁剪主修课程」默认关闭，打开先列清裁掉哪几门再确认。</p></div>
+            <div class="pv-note"><h4>空态 / 错误态 / 键盘</h4><p>没选任何经历时中栏是空态「先选一段经历」；导出失败在右栏顶部出错误条并按 error.code 给中文解释。⌘S 保存、⌘Enter 导出（需先过一次确认弹层）、Tab 顺序为 左→中→右。</p></div>
+          </div>
+        </article>
+
+        <!-- ================= 06 个人资料与设置 ================= -->
+        <article class="pv-screen">
+          <div class="pv-screen__label">
+            <span class="pv-screen__no">06</span>
+            <span class="pv-screen__name">个人资料与设置</span>
+            <span class="pv-screen__route">#/profile · #/settings</span>
+          </div>
+          <div class="pv-frame">
+            <div class="app" style="height:760px">
+              <header class="app__statusbar" role="status">
+                <span class="status-item" title="本地运行"><i class="status-dot status-dot--ok"></i><span class="status-local">127.0.0.1:52341</span><span class="small">本地</span></span>
+                <i class="status-sep" aria-hidden="true"></i>
+                <span class="status-item"><i class="status-dot status-dot--ok"></i>DeepSeek 已就绪</span>
+                <i class="status-sep" aria-hidden="true"></i>
+                <span class="status-item"><i class="status-dot status-dot--ok"></i>中文字体可用</span>
+                <span class="app__statusbar__right"><span class="status-item">资料只存本机</span></span>
+              </header>
+              <div class="app__body">
+                <nav class="sidenav" aria-label="主导航">
+                  <div class="sidenav__brand"><span class="sidenav__brand-mark" aria-hidden="true">RW</span><span class="sidenav__brand-text"><span class="sidenav__brand-name">简历仓库</span><span class="sidenav__brand-sub">本地 · 离线优先</span></span></div>
+                  <div class="sidenav__list">
+                    <div class="sidenav__group-label">工作</div>
+                    <a class="sidenav__item" href="#/workbench"><svg class="ico" aria-hidden="true"><use href="#i-dashboard"/></svg><span class="sidenav__label">工作台</span></a>
+                    <a class="sidenav__item" href="#/warehouse"><svg class="ico" aria-hidden="true"><use href="#i-warehouse"/></svg><span class="sidenav__label">经历库</span><span class="sidenav__count">12</span></a>
+                    <a class="sidenav__item" href="#/templates"><svg class="ico" aria-hidden="true"><use href="#i-template"/></svg><span class="sidenav__label">模板</span><span class="sidenav__count">4</span></a>
+                    <a class="sidenav__item" href="#/jobs"><svg class="ico" aria-hidden="true"><use href="#i-target"/></svg><span class="sidenav__label">目标职位</span><span class="sidenav__count">3</span></a>
+                    <a class="sidenav__item" href="#/builds"><svg class="ico" aria-hidden="true"><use href="#i-layers"/></svg><span class="sidenav__label">组装导出</span></a>
+                    <div class="sidenav__group-label">本地数据</div>
+                    <a class="sidenav__item is-active" href="#/profile" aria-current="page"><svg class="ico" aria-hidden="true"><use href="#i-user"/></svg><span class="sidenav__label">个人资料</span></a>
+                    <a class="sidenav__item" href="#/settings"><svg class="ico" aria-hidden="true"><use href="#i-settings"/></svg><span class="sidenav__label">设置</span></a>
+                  </div>
+                  <div class="sidenav__footer"><button class="sidenav__collapse" type="button"><svg class="ico" style="width:14px;height:14px" aria-hidden="true"><use href="#i-chevron-left"/></svg><span class="sidenav__label">收起</span></button></div>
+                </nav>
+                <div class="main">
+                  <div class="topbar">
+                    <nav class="topbar__crumbs" aria-label="面包屑"><span class="topbar__crumb is-current" aria-current="page">个人资料</span></nav>
+                    <div class="topbar__right"><button class="ui-btn ui-btn--ghost ui-btn--sm" type="button">恢复上次保存</button></div>
+                  </div>
+                  <div class="main__scroll">
+                    <div class="page">
+                      <div class="page__head">
+                        <div class="page__head-text">
+                          <h1 class="page__title">个人资料</h1>
+                          <p class="page__desc">这里的字段是简历与文件命名的唯一来源；改完保存，所有模板一起生效。</p>
+                        </div>
+                        <div class="page__actions"><button class="ui-btn ui-btn--primary" type="button">保存</button></div>
+                      </div>
+
+                      <div class="profile-layout">
+                        <div class="stack" style="gap:var(--sp-7)">
+                          <div class="ui-callout">
+                            <div class="ui-callout__head"><svg class="ico" aria-hidden="true"><use href="#i-lock"/></svg><span class="ui-callout__title">资料只存在本机</span></div>
+                            <div class="ui-callout__body">除非你在隐私确认弹层里勾选某个字段，否则这些内容不会离开这台电脑。</div>
+                          </div>
+
+                          <div class="ui-section">
+                            <div class="ui-section__head"><h2 class="ui-section__title">身份</h2></div>
+                            <div class="profile-form__grid">
+                              <div class="ui-field"><label class="ui-field__label" for="p-name-zh">姓名（中文）<span class="ui-field__req" aria-hidden="true">*</span></label><input class="ui-input" id="p-name-zh" value="陈思远"><div class="ui-field__hint">导出中文简历时 {name} 取这一列</div></div>
+                              <div class="ui-field"><label class="ui-field__label" for="p-name-en">姓名（English）</label><input class="ui-input" id="p-name-en" value="Siyuan Chen" placeholder="SIYUAN CHEN"></div>
+                              <div class="ui-field"><label class="ui-field__label" for="p-degree">学历</label><select class="ui-select" id="p-degree"><option>本科</option><option>硕士</option><option>博士</option></select></div>
+                              <div class="ui-field"><label class="ui-field__label" for="p-major">专业</label><input class="ui-input" id="p-major" value="统计学"></div>
+                            </div>
+                          </div>
+
+                          <div class="ui-section">
+                            <div class="ui-section__head"><h2 class="ui-section__title">教育</h2></div>
+                            <div class="profile-form__grid">
+                              <div class="ui-field"><label class="ui-field__label" for="p-school-zh">学校（中文）<span class="ui-field__req" aria-hidden="true">*</span></label><input class="ui-input" id="p-school-zh" value="示例大学" aria-describedby="p-school-zh-hint"><div class="ui-field__hint" id="p-school-zh-hint">导出英文简历时不会回退用中文学校名</div></div>
+                              <div class="ui-field"><label class="ui-field__label" for="p-school-en">学校（English）</label><input class="ui-input" id="p-school-en" value="Example University"></div>
+                              <div class="ui-field"><label class="ui-field__label" for="p-grad">毕业年份</label><input class="ui-input" id="p-grad" value="2026" inputmode="numeric"></div>
+                              <div class="ui-field"><label class="ui-field__label" for="p-city">所在城市</label><input class="ui-input" id="p-city" value="武汉"></div>
+                            </div>
+                          </div>
+
+                          <div class="ui-section">
+                            <div class="ui-section__head"><h2 class="ui-section__title">联系方式</h2></div>
+                            <div class="profile-form__grid">
+                              <div class="ui-field"><label class="ui-field__label" for="p-phone">手机</label><input class="ui-input" id="p-phone" value="138****0000"></div>
+                              <div class="ui-field"><label class="ui-field__label" for="p-email">邮箱</label><input class="ui-input" id="p-email" value="chen****@example.com"></div>
+                              <div class="ui-field"><label class="ui-field__label" for="p-avail">可到岗时间</label><input class="ui-input" id="p-avail" value="2025-11"></div>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div class="profile-side">
+                          <div class="profile-side__card">
+                            <div class="row" style="justify-content:space-between;align-items:baseline">
+                              <h3 class="ui-section__title" style="margin:0">导出文件名预览</h3>
+                              <span class="small muted">中文</span>
+                            </div>
+                            <div class="naming__filename"><span class="naming__filename-label">本次文件名</span>数据分析实习生-陈思远-示例大学.pdf</div>
+                            <div class="small muted">模板 {position}-{name}-{school}</div>
+                            <div class="naming__warn naming__warn--success"><svg class="ico" style="width:12px;height:12px" aria-hidden="true"><use href="#i-check-circle"/></svg>命名所需字段齐全</div>
+                            <div class="small muted">改姓名或学校，这里会立即跟着变。</div>
+                          </div>
+
+                          <div class="ui-card ui-card--pad">
+                            <div class="photo-field">
+                              <div class="row" style="justify-content:space-between;align-items:baseline">
+                                <div class="ui-field__label" style="margin:0">证件照<span class="ui-field__note">右上方 89.3×89.3pt</span></div>
+                                <span class="ui-badge">手动上传</span>
+                              </div>
+                              <div class="photo-field__drop" tabindex="0" role="button" aria-label="上传或拖入证件照">
+                                <div class="photo-field__frame">
+                                  <div class="photo-field__placeholder"><svg class="ico" aria-hidden="true"><use href="#i-upload"/></svg><span class="small muted">JPG / PNG</span></div>
+                                  <span class="photo-field__crop-hint">1:1</span>
+                                </div>
+                                <div class="small muted" style="text-align:center">拖到这里，或点击选择文件<br>建议 ≥ 400×400，正方形裁切</div>
+                              </div>
+                              <div class="photo-field__actions">
+                                <button class="ui-btn ui-btn--secondary ui-btn--sm" type="button">替换</button>
+                                <button class="ui-btn ui-btn--ghost ui-btn--sm" type="button">移除</button>
+                              </div>
+                              <div class="photo-field__imported"><span class="small">检测到简历里带照片</span><span class="photo-field__mini"></span><button class="ui-btn ui-btn--quiet ui-btn--sm" type="button">改回这张</button></div>
+                              <div class="small muted">替换会先二次确认；移除后回到「导入自简历」的候选（如果导入时检测到过）。</div>
+                            </div>
+                          </div>
+
+                          <div class="completeness">
+                            <div class="row" style="justify-content:space-between"><span class="small">资料完整度</span><span class="mono small">92%</span></div>
+                            <div class="ui-progress"><span style="width:92%"></span></div>
+                            <div class="small muted">还缺：英文学校名、作品链接（不影响导出命名）。</div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="pv-frame" style="margin-top:var(--sp-6)">
+            <div class="app" style="height:420px">
+              <div class="app__body">
+                <div class="main">
+                  <div class="topbar">
+                    <nav class="topbar__crumbs" aria-label="面包屑"><span class="topbar__crumb">个人资料</span><span aria-hidden="true">/</span><span class="topbar__crumb is-current" aria-current="page">设置 · 模型</span></nav>
+                  </div>
+                  <div class="main__scroll">
+                    <div class="page page--narrow">
+                      <div class="stack" style="gap:var(--sp-6)">
+                        <div class="ui-card ui-card--pad">
+                          <div class="ui-section__head"><h3 class="ui-section__title">模型</h3><div class="ui-section__actions"><span class="ui-badge ui-badge--success">已连接</span></div></div>
+                          <div class="stack">
+                            <div class="ui-field"><span class="ui-field__label">服务商</span><div class="ui-seg ui-seg--block" role="radiogroup" aria-label="服务商"><button class="ui-seg__opt" type="button" role="radio" aria-checked="true">DeepSeek</button><button class="ui-seg__opt" type="button" role="radio" aria-checked="false">关闭 LLM（完全不上云）</button></div><div class="ui-field__hint">关闭后仍可手工编辑与导出，只是不再有 AI 分析/润色。</div></div>
+                            <div class="ui-field"><label class="ui-field__label" for="s-key">API Key</label><div class="ui-input-wrap"><input class="ui-input ui-input--mono" id="s-key" type="password" value="sk-••••••••••••••••"><button class="ui-btn ui-btn--ghost ui-btn--sm" type="button">测试</button></div><div class="ui-field__hint">只保存在本机 .env（600 权限）；界面永远不显示完整密钥。</div></div>
+                            <details class="ui-details"><summary>高级：自定义 OpenAI 兼容地址</summary><div class="ui-details__body"><div class="ui-field"><label class="ui-field__label" for="s-base">Base URL</label><input class="ui-input ui-input--mono" id="s-base" placeholder="https://…/v1"><div class="ui-field__hint">仅在你使用自建网关或代理时填写。</div></div></div></details>
+                          </div>
+                        </div>
+                        <div class="ui-card ui-card--pad">
+                          <div class="ui-section__head"><h3 class="ui-section__title">隐私</h3></div>
+                          <div class="mini-list">
+                            <div class="mini-list__row"><span class="mini-list__main">每次联网前都必须显示「将发送字段清单」</span><span class="ui-badge ui-badge--success">已开启</span></div>
+                            <div class="mini-list__row"><span class="mini-list__main">data/ 目录（导入的原始简历）永不进入 LLM 输入</span><span class="ui-badge ui-badge--success">硬约束</span></div>
+                            <div class="mini-list__row"><span class="mini-list__main">日志中不记录密钥与完整手机号</span><span class="ui-badge ui-badge--success">已开启</span></div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="pv-notes">
+            <div class="pv-note"><h4>资料 → 命名联动</h4><p>姓名与学校改动即时反映到右侧「导出文件名预览」。清空中文学校时整张预览卡变红、显示「导出将因缺少学校而失败」，并禁用保存后的导出入口。</p></div>
+            <div class="pv-note"><h4>照片上传区</h4><p>固定 1:1 方形裁切框（最终 89.3×89.3pt）。支持拖放与点选，只做本地预览，字节交给后端保存；替换要二次确认，移除后回落到「导入自简历」候选。照片不参与任何 LLM 调用。</p></div>
+            <div class="pv-note"><h4>设置</h4><p>服务商只列 DeepSeek 与「关闭 LLM」两档；自定义 OpenAI 兼容地址收进「高级」折叠。页面不出现本机检测类提示，也不建议用户换别的服务商。</p></div>
+            <div class="pv-note"><h4>键盘与校验</h4><p>⌘S 保存；Tab 顺序按「身份 → 教育 → 联系方式 → 照片 → 命名预览」；照片投放区可用 Enter/Space 打开文件选择；手机/邮箱格式在失焦时校验并给出中文提示。</p></div>
+          </div>
+        </article>
+
+      </section>
+
+      <!-- ================= 隐私确认弹层 ================= -->
+      <section class="pv-sec" id="consent">
+        <div class="pv-sec__head">
+          <h2 class="pv-h2">隐私确认弹层（ConsentModal）</h2>
+          <p class="pv-lead">任何一次联网前都会出现，没有「不再提示」。主视野里必须同时能看到三件事：发什么、不发什么、哪些内容已被脱敏。</p>
+        </div>
+
+        <div class="pv-frame" style="height:1060px">
+          <div style="position:absolute;inset:0;background:var(--c-bg-sunken)"></div>
+          <div class="modal-layer">
+            <div class="modal" role="dialog" aria-modal="true" aria-labelledby="consent-title">
+              <div class="modal__head">
+                <span class="modal__title-icon"><svg class="ico" aria-hidden="true"><use href="#i-shield"/></svg></span>
+                <div class="stack" style="gap:2px">
+                  <h2 class="modal__title" id="consent-title">将发送字段清单</h2>
+                  <span class="small muted">AI 润色简历表述 · 只发送下列 4 项</span>
+                </div>
+                <span class="grow"></span>
+                <button class="ui-btn ui-btn--ghost ui-btn--sm ui-btn--icon" type="button" aria-label="取消并关闭"><svg class="ico" aria-hidden="true"><use href="#i-x"/></svg></button>
+              </div>
+
+              <div class="modal__body">
+                <div class="modal__meta">
+                  <div class="kv"><span class="kv__k">服务商</span><span class="kv__v">DeepSeek</span></div>
+                  <div class="kv"><span class="kv__k">模型</span><span class="kv__v mono">deepseek-chat</span></div>
+                  <div class="kv"><span class="kv__k">接口地址</span><span class="kv__v mono small">api.deepseek.com</span></div>
+                  <div class="kv"><span class="kv__k">本次用途</span><span class="kv__v">简历改写（组装）</span></div>
+                  <div class="kv"><span class="kv__k">合计</span><span class="kv__v mono small">2,148 字 · ≈1,043 tokens</span></div>
+                  <div class="copy-text"><svg class="ico" style="width:12px;height:12px" aria-hidden="true"><use href="#i-lock"/></svg><span class="mono">指纹 8f3c1a52d9e04b71…</span><span class="small muted">确认前可用它核对内容未被改动</span></div>
+                </div>
+
+                <div class="ui-callout">
+                  <div class="ui-callout__head"><svg class="ico" aria-hidden="true"><use href="#i-shield"/></svg><span class="ui-callout__title">只有下面这些字段会离开本机</span></div>
+                  <div class="ui-callout__body">其余数据（照片、完整经历库、未选中的变体、附件）全部留在本地。发送内容不含密钥，脱敏项已就地替换。</div>
+                </div>
+
+                <div class="modal__section">
+                  <div class="modal__section-head">
+                    <h3 class="modal__section-title">将要发送（4 项）</h3>
+                    <span class="small muted">按字符数与估算 token 排序</span>
+                  </div>
+                  <div class="modal__fields">
+                    <div class="modal__field">
+                      <span class="modal__field-kind"><span class="ui-badge">简历片段</span></span>
+                      <span class="modal__field-main"><span class="modal__field-label">示例科技 · 数据分析实习 · 结果导向表述</span><span class="modal__field-meta mono">packages[0].variants[impact] · 示例科技 · 经历库</span></span>
+                      <span class="modal__field-stat"><span class="mono small">412 字</span><span class="mono small muted">≈198 tok</span></span>
+                    </div>
+                    <div class="modal__field">
+                      <span class="modal__field-kind"><span class="ui-badge">简历片段</span></span>
+                      <span class="modal__field-main"><span class="modal__field-label">用户留存归因分析 · 技术细节表述</span><span class="modal__field-meta mono">packages[1].variants[technical] · 经历库</span></span>
+                      <span class="modal__field-stat"><span class="ui-badge ui-badge--warn">已脱敏</span><span class="mono small">386 字</span><span class="mono small muted">≈182 tok</span></span>
+                    </div>
+                    <div class="modal__field">
+                      <span class="modal__field-kind"><span class="ui-badge ui-badge--warn">JD 原文</span></span>
+                      <span class="modal__field-main"><span class="modal__field-label">数据分析实习生 · 示例科技 · 岗位描述</span><span class="modal__field-meta mono">jd.text · 目标职位</span></span>
+                      <span class="modal__field-stat"><span class="mono small">1,290 字</span><span class="mono small muted">≈632 tok</span></span>
+                    </div>
+                    <div class="modal__field">
+                      <span class="modal__field-kind"><span class="ui-badge ui-badge--info">系统指令</span></span>
+                      <span class="modal__field-main"><span class="modal__field-label">润色规则（不改变事实）</span><span class="modal__field-meta mono">system.prompt · 系统</span></span>
+                      <span class="modal__field-stat"><span class="mono small">60 字</span><span class="mono small muted">≈31 tok</span></span>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="modal__excluded">
+                  <div class="modal__excluded-head"><svg class="ico" aria-hidden="true"><use href="#i-shield"/></svg><strong>不会发送</strong></div>
+                  <div class="modal__excluded-grid"><span>经历 3 / 12 条被选中</span><span>表述 5 / 41 条被选中</span></div>
+                  <div class="modal__excluded-list"><span class="small muted">被跳过的：</span><span class="modal__excluded-item">校园二手平台 · 运营（未选中）</span><span class="modal__excluded-item">课程项目 · A/B 实验复现（未选中）</span></div>
+                  <div class="modal__excluded-list"><span class="small muted">标记为不发送的字段：</span><span class="modal__excluded-item mono">profile.photo_path</span><span class="modal__excluded-item mono">profile.phone</span></div>
+                  <p class="modal__excluded-note">照片与手机号不会随本次请求发送；联系方式只在本机生成 PDF 时使用。</p>
+                </div>
+
+                <div class="modal__redactions">
+                  <div class="modal__redactions-head"><svg class="ico" aria-hidden="true"><use href="#i-alert-triangle"/></svg><strong>已脱敏 2 处</strong><span class="small muted">这些内容在发送前已替换，不会出现在请求里</span></div>
+                  <div class="modal__redaction-row"><span class="mono small">packages[1].variants.technical</span><span class="small">手机号</span><span class="mono small">138****0000</span><span class="small muted">→ [PHONE]</span></div>
+                  <div class="modal__redaction-row"><span class="mono small">packages[1].variants.technical</span><span class="small">姓名</span><span class="mono small">陈**</span><span class="small muted">→ [NAME]</span><span class="small muted">×2</span></div>
+                </div>
+
+                <details class="modal__payload ui-details"><summary>查看将要发送的完整文本（只读）</summary><pre class="mono">[system] 你是简历润色助手，只能改写措辞，不得新增事实或数字…
+[user] 请把下列经历改写得更结果导向，保持字数相当：
+- 负责增长实验的设计与复盘，6 组 A/B 测试覆盖日活 42 万用户…</pre></details>
+              </div>
+
+              <div class="modal__foot">
+                <div class="modal__foot-actions">
+                  <button class="ui-btn ui-btn--ghost" type="button">取消（不发送）<span class="kbd">Esc</span></button>
+                  <button class="ui-btn ui-btn--primary" type="button"><svg class="ico" aria-hidden="true"><use href="#i-check"/></svg>确认发送 · ≈1,043 tokens</button>
+                </div>
+                <div class="modal__foot-hint">发送到 DeepSeek / deepseek-chat；按 Enter 不会发送，必须点这个按钮。</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="pv-notes">
+          <div class="pv-note"><h4>不可绕过的规则</h4><p>取消（Esc 或点遮罩）只是本次不发；下次仍会弹。没有「记住我的选择」。确认按钮里带服务商、模型与 token 估算，避免盲点。</p></div>
+          <div class="pv-note"><h4>三种非正常态</h4><p>预览过期 → 按钮换成「预览已过期 · 重新生成」；发送失败 → 弹层不关、底部出错误条 + 错误码；密钥缺失 → 错误条给「打开设置」，不显示任何密钥片段。</p></div>
+          <div class="pv-note"><h4>键盘</h4><p>打开后焦点落在对话框，Tab 在弹层内循环；Enter 被显式拦截（除了带 data-allow-enter 的按钮）；Esc 等于取消。</p></div>
+        </div>
+      </section>
+
+      <!-- ================= A4 纸张 ================= -->
+      <section class="pv-sec" id="paper">
+        <div class="pv-sec__head">
+          <h2 class="pv-h2">A4 纸张：中文与英文</h2>
+          <p class="pv-lead">导出物就是这张纸。照片固定在右上角 89.28×89.28pt（≈31.5mm），距页面顶边 3.82pt、距页面右缘 9.13pt；姓名区在左，不抢照片位。中文用宋体一系，英文用 Times 一系。两张都是真实体量（1,289 字 / 5 段 / 11 条要点 / 2 段整段文字），按默认的 11pt / 行距比 1.15 + 原件边距排版，单页放得下（内容 902px / 可用 1090px）。</p>
+        </div>
+
+        <div class="pv-two">
+          <div class="pv-panel">
+            <div class="pv-panel__head"><span class="ui-badge ui-badge--success">中文模板</span><span class="small muted">单页 · 含照片</span></div>
+            <div class="pv-paper"><div class="doc doc--density-original"><div class="doc__header"><div class="doc__header-main"><h1 class="doc__name">陈思远</h1><div class="doc__headline">数据分析 · 2026 届本科 · 求职：数据分析实习生</div><div class="doc__contact"><span class="doc__contact-item">138****0000</span><span class="doc__contact-item">chen****@example.com</span><span class="doc__contact-item">示例大学 · 管理学（商业数据分析）</span><span class="doc__contact-item">可到岗：2026.11</span></div></div><div class="doc__photo doc__photo--ph">照片</div></div><div class="doc__section"><h2 class="doc__section-title">教育背景</h2><div class="doc__entry-head"><span class="doc__entry-title">示例大学 · 管理学（商业数据分析）</span><span class="doc__entry-date">2022.09 – 2026.06</span></div><p class="doc__fact">专业成绩：GPA <mark class="num">3.72</mark>/<mark class="num">4</mark>、加权均分 <mark class="num">88.6</mark>/<mark class="num">100</mark>、CET<mark class="num">4</mark> <mark class="num">561</mark>、CET<mark class="num">6</mark> <mark class="num">507</mark></p><p class="doc__fact">主修课程：统计学(<mark class="num">93</mark>)、数据分析与处理（R）(<mark class="num">91</mark>)、社会经济调查理论方法与实践(<mark class="num">90</mark>)、数据结构与程序设计（Python）(<mark class="num">89</mark>)、数据库系统原理（SQL）(<mark class="num">89</mark>)、管理学(<mark class="num">88</mark>)、企业战略管理(<mark class="num">88</mark>)</p></div><div class="doc__section"><h2 class="doc__section-title">实习经历</h2><div class="doc__entry-head"><span class="doc__entry-title">示例科技 · 数据分析实习生</span><span class="doc__entry-date">2026.07 – 2026.10</span></div><p class="doc__bullet">独立负责 <mark class="num">2020.01</mark>–<mark class="num">2025.12</mark> 共 <mark class="num">6</mark> 年、<mark class="num">2200</mark> 余天的 <mark class="num">17</mark> 项逐日环境指标全链路治理，覆盖温湿度、PM₁/PM₂.₅/PM₁₀ 等 <mark class="num">6</mark> 项污染物及 <mark class="num">4</mark> 类衍生指标。</p><p class="doc__bullet">通过 AI 检索定位 <mark class="num">3</mark> 个开源环境数据平台，申请 API 批量采集，完成异常值修正、缺失值插补与 PM₁ 估算，单表入库 <mark class="num">12.4</mark> 万行。</p><p class="doc__bullet">依据标准换算公式把全量臭氧数据从 <mark class="num">8</mark> 小时滑动平均统一为 <mark class="num">24</mark> 小时平均口径，交付完整率 <mark class="num">99.7</mark>%、口径一致性 <mark class="num">100</mark>% 的数据集，一次性通过审核。</p></div><div class="doc__section"><h2 class="doc__section-title">项目经历</h2><div class="doc__entry-head"><span class="doc__entry-title">竞速类游戏版本 A/B 测试对照分析</span><span class="doc__entry-date">2026.09 – 2026.10</span></div><p class="doc__bullet">为验证广告变现策略，开展三版本 A/B 对照测试：基于 <mark class="num">6,527</mark> 条行为数据双层清洗，用 IPW 逆概率加权校正样本失衡，构建 <mark class="num">1,220</mark> 人标准化数据集，统一人均局数与渗透率口径。</p><p class="doc__bullet">用广告增量瀑布分解与关卡留存漏斗定位机制，结合显著性检验与最小样本量校验，确认 v<mark class="num">2</mark> 人均广告 +<mark class="num">39.3</mark>%（p=<mark class="num">0.018</mark>），输出完整复盘报告。</p><div class="doc__entry-head"><span class="doc__entry-title">社区超市门店选址与订单量预测（商业分析赛）</span><span class="doc__entry-date">2026.03 – 2026.04</span></div><p class="doc__bullet">整合 <mark class="num">49</mark> 家门店多维运营数据，对比 <mark class="num">12</mark> 种回归模型后选定 Ridge 回归搭建订单预测模型，同步建立四维度选址评分体系与开店阈值规则。</p><p class="doc__bullet">通过特征筛选与稳定性验证量化关键因子，把模型转成可直接使用的决策工具，依托 AI Agent 完成测算，输出报告形成落地闭环。</p><div class="doc__entry-head"><span class="doc__entry-title">品牌策划竞赛 · 消费者调研赛道</span><span class="doc__entry-date">2025.11 – 2026.01</span></div><p class="doc__bullet">主导消费者调研全流程：设计覆盖品类认知、消费行为、健康需求、场景偏好 <mark class="num">4</mark> 大维度 <mark class="num">28</mark> 题问卷，回收有效样本 <mark class="num">500</mark>+，有效回收率 <mark class="num">92.3</mark>%。</p><p class="doc__bullet">用 SPSS 完成信效度检验、交叉分析与 K-means 聚类，划分 <mark class="num">4</mark> 类核心客群、定位 <mark class="num">6</mark> 大市场机会点，<mark class="num">12</mark> 项结论落地品牌全案，获校级二等奖。</p></div><div class="doc__section"><h2 class="doc__section-title">校园活动</h2><div class="doc__entry-head"><span class="doc__entry-title">示例大学 · 学习委员</span><span class="doc__entry-date">2024.09 – 至今</span></div><p class="doc__bullet">荣誉：<mark class="num">2024</mark>–<mark class="num">2025</mark> 学年院级社会活动积极分子；校级情景剧大赛三等奖（团队 <mark class="num">8</mark> 人）。</p><p class="doc__bullet">主要活动：协办第 <mark class="num">31</mark> 届案例分析大赛（技术组）、樱花开放期志愿者（累计 <mark class="num">42</mark> 小时）、赴英国剑桥 AI 与金融实训项目负责人。</p></div><div class="doc__section"><h2 class="doc__section-title">职业技能</h2><p class="doc__skill-line">数据分析类：掌握 Python、R、SQL 等编程语言，可独立进行数据清洗、统计分析与可视化处理</p><p class="doc__skill-line">基础办公类：掌握 Excel 的数据透视表、VLOOKUP 函数等常用工具，可以快速上手工作</p><p class="doc__skill-line">AI 开发类：可以借助 AI Agent 对重复性数据挖掘工作进行自动化，提升处理效率</p></div><div class="doc__footer">简历由本地工具生成 · 内容以经历库事实为准</div></div></div>
+            <p class="pv-panel__note">1,289 字 · 5 段 · 11 条要点 · 2 段整段（专业成绩 / 主修课程）</p>
+          </div>
+          <div class="pv-panel">
+            <div class="pv-panel__head"><span class="ui-badge ui-badge--info">English 模板</span><span class="small muted">单页 · 无照片</span></div>
+            <div class="pv-paper"><div class="doc doc--en doc--no-photo doc--compact"><div class="doc__header"><div class="doc__header-main"><h1 class="doc__name">SIYUAN CHEN</h1><div class="doc__headline">Data Analytics · Class of 2026 · Applying for Data Analytics Intern</div><div class="doc__contact"><span class="doc__contact-item">138****0000</span><span class="doc__contact-item">chen****@example.com</span><span class="doc__contact-item">Example University · Statistics</span><span class="doc__contact-item">Available 2026.11</span></div></div></div><div class="doc__section"><h2 class="doc__section-title">EDUCATION</h2><div class="doc__entry-head"><span class="doc__entry-title">Example University · B.Sc. in Statistics (Business Data Analytics)</span><span class="doc__entry-date">2022.09 – 2026.06</span></div><p class="doc__fact">GPA <mark class="num">3.72</mark>/<mark class="num">4.0</mark>, weighted average <mark class="num">88.6</mark>/<mark class="num">100</mark>, CET-<mark class="num">4</mark> <mark class="num">561</mark>, CET-<mark class="num">6</mark> <mark class="num">507</mark>.</p><p class="doc__fact">Relevant coursework: Statistics (<mark class="num">93</mark>), Data Analysis with R (<mark class="num">91</mark>), Survey Methodology (<mark class="num">90</mark>), Data Structures in Python (<mark class="num">89</mark>), Database Systems with SQL (<mark class="num">89</mark>), Management (<mark class="num">88</mark>), Strategic Management (<mark class="num">88</mark>).</p></div><div class="doc__section"><h2 class="doc__section-title">EXPERIENCE</h2><div class="doc__entry-head"><span class="doc__entry-title">Example Tech · Data Analytics Intern</span><span class="doc__entry-date">2026.07 – 2026.10</span></div><p class="doc__bullet">Owned end-to-end governance of <mark class="num">17</mark> daily environmental metrics across <mark class="num">2020</mark>–<mark class="num">2025</mark> (<mark class="num">2,200</mark>+ days), covering temperature, humidity, PM<mark class="num">1</mark>/PM<mark class="num">2.5</mark>/PM<mark class="num">10</mark> and <mark class="num">4</mark> derived indicators.</p><p class="doc__bullet">Used an AI agent to locate <mark class="num">3</mark> open environmental data APIs, then ran anomaly correction, imputation and PM<mark class="num">1</mark> estimation to load a <mark class="num">124</mark>k-row table.</p><p class="doc__bullet">Converted all ozone readings from <mark class="num">8</mark>-hour to <mark class="num">24</mark>-hour moving averages per the standard formula; delivered <mark class="num">99.7</mark>% completeness and <mark class="num">100</mark>% metric consistency in one pass.</p></div><div class="doc__section"><h2 class="doc__section-title">PROJECTS</h2><div class="doc__entry-head"><span class="doc__entry-title">Racing Game A/B Test Analysis · Team Lead</span><span class="doc__entry-date">2026.09 – 2026.10</span></div><p class="doc__bullet">Ran a three-arm A/B test on ad monetisation: cleaned <mark class="num">6,527</mark> behavioural rows, corrected imbalance with IPW weighting, and built a <mark class="num">1,220</mark>-user standardised dataset.</p><p class="doc__bullet">Located the mechanism with ad-increment waterfalls and level-retention funnels; validated a +<mark class="num">39.3</mark>% ad revenue lift (p=<mark class="num">0.018</mark>) and shipped the readout.</p><div class="doc__entry-head"><span class="doc__entry-title">Store Siting and Order Forecasting · Team Member</span><span class="doc__entry-date">2026.03 – 2026.04</span></div><p class="doc__bullet">Consolidated multi-source operating data for <mark class="num">49</mark> stores, compared <mark class="num">12</mark> regression models, and selected Ridge regression with SupportVectorMachineHyperparameters tuning plus a four-dimension scorecard.</p><p class="doc__bullet">Quantified key drivers through feature screening and stability checks, turning the model into a decision tool and closing the loop with an AI agent.</p><div class="doc__entry-head"><span class="doc__entry-title">Brand Strategy Competition · Team Lead</span><span class="doc__entry-date">2025.11 – 2026.01</span></div><p class="doc__bullet">Led the full consumer research cycle: a <mark class="num">28</mark>-question survey across <mark class="num">4</mark> dimensions, <mark class="num">500</mark>+ valid responses, <mark class="num">92.3</mark>% response rate.</p><p class="doc__bullet">Ran reliability and validity tests, cross-tabs and K-means clustering in SPSS; defined <mark class="num">4</mark> segments and <mark class="num">6</mark> opportunity areas and landed <mark class="num">12</mark> actions.</p></div><div class="doc__section"><h2 class="doc__section-title">CAMPUS</h2><div class="doc__entry-head"><span class="doc__entry-title">Example University · Academic Representative</span><span class="doc__entry-date">2024.09 – present</span></div><p class="doc__bullet">Honours: <mark class="num">2024</mark>–<mark class="num">2025</mark> Faculty Social Activity Award; <mark class="num">3</mark>rd Prize, University Scenario Competition (team of <mark class="num">8</mark>).</p><p class="doc__bullet">Activities: co-organised the <mark class="num">31</mark>st Case Analysis Competition (tech team), <mark class="num">42</mark> volunteer hours, led the Cambridge AI and Finance programme.</p></div><div class="doc__section"><h2 class="doc__section-title">SKILLS</h2><p class="doc__skill-line">Data analytics: Python, R, SQL; independent data cleaning, statistical analysis and visualisation</p><p class="doc__skill-line">Office productivity: Excel pivot tables, VLOOKUP and related tooling; quick to onboard</p><p class="doc__skill-line">AI development: automate repetitive data-mining tasks with AI agents to improve throughput</p></div><div class="doc__footer">Generated locally · content follows the experience warehouse</div></div></div>
+            <p class="pv-panel__note">同一套版式，Times 一系；长单词用 overflow-wrap: break-word 断行，不横向溢出。</p>
+          </div>
+        </div>>
+
+        <div class="pv-notes">
+          <div class="pv-note"><h4>版式规格</h4><p><b>页边距照抄原件</b>：上 8.3pt / 下 16.4pt / 左 14.8pt / 右 15.6pt（@page 的 margin 归零，四边内边距由 .doc 承担）。正文默认 <b>11pt / 行距比 1.15</b>（契约首档；原件实测 11pt、行距 12pt≈1.09×）：真实体量下内容 902px、可用 1090px，<b>余 188px ≈ 50mm</b>（口径：页高 − 上边距 − 下边距）。装不下才降 10.5 → 10.0 → <b>9.5pt 紧急档</b>，四档行距比恒定 1.15 —— 降档只降字号，不放大行距。另一档「宽松（可能两页）」上下 16mm / 左右 15mm。<b>条目头必须单行</b>：org · role …… 日期同行，日期列宽取版心 12%–22%。照片不随密度变：89.28pt、距顶 3.82pt、距右 9.13pt。真实基线以 t8 首份 PDF + data/eval/check_export_pdf.py 为准。中文 bullets 用「·」，英文用「•」并做悬挂缩进；数字高亮只在校对界面出现，导出稿里回到普通正文。</p></div>
+          <div class="pv-note"><h4>照片位</h4><p>89.28×89.28pt 正方形（真值反解自用户 PDF 内容流：左边 x0=497.08pt、距页顶 3.82pt、距页右缘 9.13pt）；header 右侧预留 padding，没有照片时（.doc--no-photo）不留空洞，姓名区自然铺满。</p></div>
+          <div class="pv-note"><h4>中英混排</h4><p>中英混排不断行（line-break: normal + overflow-wrap: break-word），数字与英文单词不拆开；标点用全角，括号内英文保留半角。</p></div>
+        </div>
+      </section>
+
+      <!-- ================= 状态对照 ================= -->
+      <section class="pv-sec" id="states">
+        <div class="pv-sec__head">
+          <h2 class="pv-h2">状态对照：语言缺失 / 命名无效 / 无照片 / 裁剪课程 / 任务与空态</h2>
+          <p class="pv-lead">这些不是「边角情况」，而是每天都会遇到的岔口。每个状态都要说清三件事：发生了什么、还能不能继续、下一步点哪里。</p>
+        </div>
+
+        <div class="pv-grid3" style="grid-template-columns:repeat(2,minmax(0,1fr))">
+          <div class="pv-panel">
+            <div class="pv-panel__head"><span class="ui-badge ui-badge--warn">语言缺失</span><span class="small muted">切到 English</span></div>
+            <div class="pv-panel__body">
+              <div class="row" style="justify-content:space-between;gap:var(--sp-4)">
+                <div class="ui-field__label" style="margin:0">简历语言<span class="ui-field__note">不回退用中文列拼英文名</span></div>
+                <div class="ui-seg" role="radiogroup" aria-label="简历语言">
+                  <button class="ui-seg__opt" type="button" role="radio" aria-checked="false">中文<span class="ui-seg__badge">中文模板</span></button>
+                  <button class="ui-seg__opt" type="button" role="radio" aria-checked="true">English<span class="ui-seg__badge">English 模板</span></button>
+                </div>
+              </div>
+              <div class="ui-callout ui-callout--warn">
+                <div class="ui-callout__head"><svg class="ico" aria-hidden="true"><use href="#i-alert-triangle"/></svg><span class="ui-callout__title">English 模板缺少 2 个字段</span></div>
+                <div class="ui-callout__body">
+                  <div class="ui-chip-set"><span class="ui-chip ui-chip--warn">姓名（English）</span><span class="ui-chip ui-chip--warn">学校（English）</span></div>
+                  <p style="margin:6px 0 0">英文模板不会回退到中文字段：请补全英文姓名与学校，否则导出会被拒绝。</p>
+                </div>
+                <div class="ui-callout__actions"><button class="ui-btn ui-btn--ghost ui-btn--sm" type="button">去个人资料补齐<svg class="ico" aria-hidden="true"><use href="#i-arrow-right"/></svg></button></div>
+              </div>
+              <div class="small muted">补齐后这条提示变成绿字「English 模板所需字段齐全」，不用刷新。</div>
+            </div>
+          </div>
+
+          <div class="pv-panel">
+            <div class="pv-panel__head"><span class="ui-badge ui-badge--danger">命名无效</span><span class="small muted">缺 school</span></div>
+            <div class="pv-panel__body">
+              <div class="naming">
+                <div class="ui-field__label" style="margin:0">文件命名</div>
+                <input class="ui-input ui-input--mono" value="{position}-{name}-{school}" aria-invalid="true" aria-label="文件命名模板">
+                <div class="naming__filename is-invalid"><span class="naming__filename-label">本次文件名</span>（命名无效，不会导出）</div>
+                <div class="naming__chips">
+                  <span class="ui-chip ui-chip--mono">position = 数据分析实习生</span>
+                  <span class="ui-chip ui-chip--mono">name = 陈思远</span>
+                  <span class="ui-chip ui-chip--mono ui-chip--warn">school = 空</span>
+                </div>
+                <div class="naming__err" role="alert"><svg class="ico" style="width:14px;height:14px" aria-hidden="true"><use href="#i-alert-circle"/></svg><span class="stack" style="gap:var(--sp-2)"><span>导出将因缺少学校而失败：请填写中文或英文学校名。</span><span class="naming__err-actions"><button class="ui-btn ui-btn--primary ui-btn--sm" type="button">去个人资料补齐字段</button></span></span></div>
+                <p class="small muted">校验由 POST /api/v1/naming/validate 返回（恒 200），前端不自己拼文件名。</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="pv-panel">
+            <div class="pv-panel__head"><span class="ui-badge">无照片</span><span class="small muted">开关置灰但不阻断</span></div>
+            <div class="pv-panel__body">
+              <div class="row" style="justify-content:space-between;align-items:center;gap:var(--sp-4)">
+                <div class="ui-field__label" style="margin:0">包含照片<span class="ui-field__note">中文与英文模板都支持右上角照片位</span></div>
+                <button class="ui-switch" type="button" role="switch" aria-checked="false" aria-disabled="true" disabled><span class="ui-switch__track"><span class="ui-switch__thumb"></span></span></button>
+              </div>
+              <div class="photo-pick is-empty">
+                <span class="photo-pick__thumb" aria-hidden="true"><svg class="ico" aria-hidden="true"><use href="#i-user"/></svg></span>
+                <span class="stack grow" style="gap:2px"><span class="small">还没有照片</span><span class="small muted">未设置照片，将导出无照片版本 —— 不影响继续导出</span></span>
+                <button class="ui-btn ui-btn--ghost ui-btn--sm" type="button">去上传</button>
+              </div>
+              <div class="small muted">这时导出按钮照常可点；生成的 PDF 用 .doc--no-photo，姓名区自然铺满，不会留空洞。</div>
+            </div>
+          </div>
+
+          <div class="pv-panel">
+            <div class="pv-panel__head"><span class="ui-badge ui-badge--warn">裁剪课程</span><span class="small muted">默认关闭 · 先确认再裁</span></div>
+            <div class="pv-panel__body">
+              <div class="course-trim is-on">
+                <div class="course-trim__row">
+                  <span class="course-trim__main"><span class="course-trim__title">主修课程 · 7 门</span><span class="course-trim__sub small muted">将裁掉 2 门（抽样调查、计量经济学），其余保留</span></span>
+                  <button class="ui-switch" type="button" role="switch" aria-checked="true" aria-label="按 JD 裁剪主修课程"><span class="ui-switch__track"><span class="ui-switch__thumb"></span></span></button>
+                </div>
+                <div class="course-trim__confirm" role="group" aria-label="确认裁剪课程">
+                  <span class="course-trim__confirm-title">这次会裁掉这几门：</span>
+                  <span class="ui-chip-set"><span class="ui-chip ui-chip--warn">抽样调查</span><span class="ui-chip ui-chip--warn">计量经济学</span></span>
+                  <span class="small muted">保留 5 / 7 门。</span>
+                  <span class="course-trim__confirm-actions"><button class="ui-btn ui-btn--ghost ui-btn--sm" type="button">取消</button><button class="ui-btn ui-btn--primary ui-btn--sm" type="button">确认裁剪</button></span>
+                </div>
+              </div>
+              <div class="small muted">关着的时候一行课都不动。打开只是进入「确认」这一步，确认后才写进这份简历；经历库里的原始课程不受影响。</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="pv-two" style="margin-top:var(--sp-7)">
+          <div class="pv-panel">
+            <div class="pv-panel__head"><span class="ui-badge ui-badge--info">后台任务</span><span class="small muted">JobToast · 右下角</span></div>
+            <div class="pv-panel__body">
+              <div class="toast-layer" style="position:static">
+                <div class="toast toast--running">
+                  <div class="toast__head"><span class="toast__icon"><svg class="ico" aria-hidden="true"><use href="#i-download"/></svg></span><span class="toast__main"><span class="toast__title">导出 PDF</span><span class="toast__status">进行中 · 正在渲染第 1 页</span></span></div>
+                  <div class="ui-progress"><span style="width:46%"></span></div>
+                  <div class="toast__foot"><button class="ui-btn ui-btn--ghost ui-btn--sm" type="button">取消</button></div>
+                </div>
+                <div class="toast toast--failed">
+                  <div class="toast__head"><span class="toast__icon"><svg class="ico" aria-hidden="true"><use href="#i-alert-circle"/></svg></span><span class="toast__main"><span class="toast__title">导出 PDF</span><span class="toast__status">失败 · 渲染引擎报错</span></span></div>
+                  <div class="toast__error">PDF 渲染失败，已保留中间文件供排查。<span class="mono small muted">RENDER_FAILED</span></div>
+                  <div class="toast__foot"><button class="ui-btn ui-btn--ghost ui-btn--sm" type="button">查看诊断</button><button class="ui-btn ui-btn--secondary ui-btn--sm" type="button">重试</button></div>
+                </div>
+                <div class="toast toast--interrupted">
+                  <div class="toast__head"><span class="toast__icon"><svg class="ico" aria-hidden="true"><use href="#i-refresh"/></svg></span><span class="toast__main"><span class="toast__title">导出 PDF</span><span class="toast__status">已中断</span></span></div>
+                  <div class="toast__error">服务重启导致任务中断，没有产生文件。</div>
+                  <div class="toast__foot"><button class="ui-btn ui-btn--secondary ui-btn--sm" type="button">重新执行</button></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="pv-panel">
+            <div class="pv-panel__head"><span class="ui-badge">空态 / 骨架</span><span class="small muted">首屏与加载</span></div>
+            <div class="pv-panel__body">
+              <div class="ui-empty"><svg class="ico" aria-hidden="true"><use href="#i-folder"/></svg><div class="ui-empty__title">还没有经历</div><div class="ui-empty__desc">讲故事就能入库：说清「做了什么、怎么做、结果多少」，系统会拆成事实与多种表述。</div><div class="row" style="gap:var(--sp-3)"><button class="ui-btn ui-btn--primary ui-btn--sm" type="button">对话录入</button><button class="ui-btn ui-btn--ghost ui-btn--sm" type="button">导入简历</button></div></div>
+              <div class="stack" style="margin-top:var(--sp-6)">
+                <div class="ui-skel ui-skel--title"></div>
+                <div class="ui-skel ui-skel--line"></div>
+                <div class="ui-skel ui-skel--line" style="width:72%"></div>
+                <div class="ui-skel ui-skel--block"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="pv-panel" style="margin-top:var(--sp-7)">
+          <div class="pv-panel__head"><span class="ui-badge ui-badge--danger">错误文案</span><span class="small muted">按 error.code 分支，不直接吐 JSON</span></div>
+          <div class="pv-panel__body">
+            <div class="stack">
+              <div class="ui-callout ui-callout--danger"><div class="ui-callout__head"><svg class="ico" aria-hidden="true"><use href="#i-alert-triangle"/></svg><span class="ui-callout__title">这台机器上没有可用的中文字体</span></div><div class="ui-callout__body">PDF 导不出来，但内容与命名都已保存。装好字体后重试，或先导出 DOCX。<span class="err-code mono">FONT_UNAVAILABLE</span></div><div class="ui-callout__actions"><button class="ui-btn ui-btn--ghost ui-btn--sm" type="button">查看字体诊断</button><button class="ui-btn ui-btn--secondary ui-btn--sm" type="button">先导出 DOCX</button></div></div>
+              <div class="ui-callout ui-callout--danger"><div class="ui-callout__head"><svg class="ico" aria-hidden="true"><use href="#i-alert-circle"/></svg><span class="ui-callout__title">PDF 渲染失败</span></div><div class="ui-callout__body">已保留中间文件供排查；这次没有产生可下载的 PDF。<span class="err-code mono">RENDER_FAILED</span></div><div class="ui-callout__actions"><button class="ui-btn ui-btn--ghost ui-btn--sm" type="button">打开导出目录</button><button class="ui-btn ui-btn--secondary ui-btn--sm" type="button">重试</button></div></div>
+              <div class="ui-callout ui-callout--warn"><div class="ui-callout__head"><svg class="ico" aria-hidden="true"><use href="#i-key"/></svg><span class="ui-callout__title">密钥被拒绝</span></div><div class="ui-callout__body">密钥可能已过期或填错，请到设置页更新后重试。本地编辑与导出不受影响。<span class="err-code mono">LLM_AUTH</span></div><div class="ui-callout__actions"><button class="ui-btn ui-btn--ghost ui-btn--sm" type="button">打开设置</button></div></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="pv-panel" style="margin-top:var(--sp-7)">
+          <div class="pv-panel__head"><span class="ui-badge ui-badge--info">模型名</span><span class="small muted">按本次用途取真实模型，不写死默认值</span></div>
+          <div class="pv-panel__body">
+            <div class="pv-two">
+              <div class="stack">
+                <p class="small muted">同一服务商、不同用途会用不同模型 —— 弹层显示的是 <span class="mono">POST /consent/preview</span> 返回的 <span class="mono">model</span>，前端不另立默认值：</p>
+                <div class="kv"><span class="kv__k">简历改写（组装）</span><span class="kv__v mono">deepseek-chat</span></div>
+                <div class="kv"><span class="kv__k">JD 与公司分析</span><span class="kv__v mono">deepseek-reasoner</span></div>
+                <div class="kv"><span class="kv__k">导入解析兜底</span><span class="kv__v mono">deepseek-chat</span></div>
+              </div>
+              <div class="stack">
+                <div class="ui-callout ui-callout--danger">
+                  <div class="ui-callout__head"><svg class="ico" aria-hidden="true"><use href="#i-alert-triangle"/></svg><span class="ui-callout__title">没有拿到本次的模型名，这次不允许发送</span></div>
+                  <div class="ui-callout__body">写错模型等于在隐私声明里说错话，所以这里直接停住 —— 去设置页确认服务商与模型后，点「重新生成预览」。</div>
+                </div>
+                <div class="kv"><span class="kv__k">模型</span><span class="kv__v" style="color:var(--c-danger)">模型未知（将不发送）</span></div>
+                <div class="row" style="gap:var(--sp-3);align-items:center">
+                  <button class="ui-btn ui-btn--primary" type="button" disabled><svg class="ico" aria-hidden="true"><use href="#i-alert-triangle"/></svg>模型未知 · 暂不能发送</button>
+                  <span class="small muted">按 Enter 也不会发送</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= 深色 ================= -->
+      <section class="pv-sec" id="dark">
+        <div class="pv-sec__head">
+          <h2 class="pv-h2">深色模式</h2>
+          <p class="pv-lead">同一套 token，深色值只有一份：所有颜色用 light-dark() 成对声明，切换主题只改 color-scheme / data-theme，不重写任何组件样式。</p>
+        </div>
+
+        <div class="pv-dark theme-dark">
+          <header class="app__statusbar" style="border-radius:var(--r-md);border:1px solid var(--c-border)">
+            <span class="status-item"><i class="status-dot status-dot--ok"></i><span class="status-local">127.0.0.1:52341</span><span class="small">本地</span></span>
+            <i class="status-sep" aria-hidden="true"></i>
+            <span class="status-item"><i class="status-dot status-dot--ok"></i>DeepSeek 已就绪</span>
+            <i class="status-sep" aria-hidden="true"></i>
+            <span class="status-item"><i class="status-dot status-dot--ok"></i>中文字体可用</span>
+            <span class="app__statusbar__right"><span class="status-item">最近导出 数据分析实习生-陈思远-示例大学.pdf</span></span>
+          </header>
+
+          <div class="grid grid--3" style="margin-top:var(--sp-6)">
+            <div class="ui-card ui-card--pad stack">
+              <div class="ui-field__label" style="margin:0">文件命名</div>
+              <input class="ui-input ui-input--mono" value="{position}-{name}-{school}" aria-label="文件命名模板（深色示例）">
+              <div class="naming__filename"><span class="naming__filename-label">本次文件名</span>数据分析实习生-陈思远-示例大学.pdf</div>
+              <div class="naming__chips"><span class="ui-chip ui-chip--mono">name = 陈思远</span><span class="ui-chip ui-chip--mono">school = 示例大学</span></div>
+            </div>
+            <div class="ui-card ui-card--pad stack">
+              <div class="row" style="justify-content:space-between;align-items:center"><span class="ui-field__label" style="margin:0">包含照片</span><button class="ui-switch" type="button" role="switch" aria-checked="true"><span class="ui-switch__track"><span class="ui-switch__thumb"></span></span></button></div>
+              <div class="photo-pick"><span class="photo-pick__thumb"><span class="ui-skel ui-skel--block" style="width:100%;height:100%;border-radius:4px"></span></span><span class="stack grow" style="gap:2px"><span class="small">将使用这张照片</span><span class="small muted">导入自简历 · 600×800</span></span></div>
+              <button class="ui-btn ui-btn--primary ui-btn--block" type="button"><svg class="ico" aria-hidden="true"><use href="#i-download"/></svg>导出 PDF</button>
+            </div>
+            <div class="ui-card ui-card--pad stack">
+              <div class="badge-row"><span class="ui-badge ui-badge--success">已覆盖</span><span class="ui-badge ui-badge--danger">缺口</span><span class="ui-badge ui-badge--warn">加分</span><span class="ui-badge ui-badge--info">JD 原文</span></div>
+              <div class="ui-callout ui-callout--warn"><div class="ui-callout__head"><svg class="ico" aria-hidden="true"><use href="#i-alert-triangle"/></svg><span class="ui-callout__title">English 模板缺少 2 个字段</span></div><div class="ui-callout__body">补全英文姓名与学校后即可导出。</div></div>
+              <div class="ui-chip-set"><span class="ui-chip">SQL</span><span class="ui-chip">Python</span><span class="ui-chip ui-chip--warn">Tableau 缺口</span></div>
+            </div>
+          </div>
+
+          <div class="small muted" style="margin-top:var(--sp-6)">深色下对比度同样 ≥ 4.5:1；状态点始终「颜色 + 文字」双通道，打印时强制回到浅色纸张。</div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="pv-foot">
+      <div class="stack" style="gap:6px">
+        <strong>简历仓库 · 设计预览 v1</strong>
+        <span class="small muted">静态页面，零 JS、零外链，直接双击用浏览器打开即可评审。配套文档：docs/DESIGN.md（信息架构与逐屏说明）、docs/DESIGN-BRIEF.md、docs/API-CONTRACT.md。</span>
+      </div>
+      <div class="row" style="gap:var(--sp-5)">
+        <a class="small" href="./index.html">打开应用骨架 index.html</a>
+        <a class="small" href="#top">回到顶部</a>
+      </div>
+    </footer>
+  </body>
+</html>

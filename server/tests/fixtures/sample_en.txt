@@ -1,0 +1,30 @@
+LI MING
+Sample University, Class of 2029 | Available: Early July 2028
+Tel: +86 138-0013-8000 | liming@example.com
+
+EDUCATION
+Sample University, School of Data Science
+B.Sc. in Data Science and Big Data Technology | GPA: 3.72/4.0 (90.10/100) 09/2025 - 06/2029
+- CET-4: 601 | CET-6: 552
+- Relevant Courses: Probability and Statistics (95), Data Structures (Python) (93), Database Systems (SQL) (92), Machine Learning (91)
+
+INTERNSHIP EXPERIENCE
+Sample Technology Co., Ltd. - Data Analysis Intern 07/2027 - 09/2027
+- Cleaned and standardized 120,000 order records covering 4 business metrics, improving data quality to 99.2%.
+- Segmented users with K-means clustering into 3 personas and documented the metric definitions as a reusable standard.
+
+RESEARCH PROJECTS
+Second-hand Trading Platform Volume Prediction - Team Leader 03/2027 - 05/2027
+- Compared 5 models on 6,820 historical orders and selected Ridge regression, reaching 88.6% prediction accuracy.
+- Designed an A/B test for the recommendation module, lifting transactions per user by 6.4% (p=0.031).
+
+CAMPUS ACTIVITIES
+Sample University
+Class Monitor | School of Data Science 09/2025 - Present
+- Honors: Outstanding Student Leader of the Year 2026
+- Organized 3 technical sharing sessions with 210 total attendees.
+
+SKILLS & CERTIFICATES
+Data Analytics: Python, SQL, R, pandas, Tableau; comfortable with data cleaning and statistical testing.
+Office Suite: Advanced Excel including PivotTable and VLOOKUP.
+AI Development: Built AI Agent workflows for repetitive data verification.

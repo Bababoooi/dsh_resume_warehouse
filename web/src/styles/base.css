@@ -1,0 +1,387 @@
+/* ============================================================================
+   base.css — 复位、中文排版基线、可访问性基线、少量工具类
+   依赖 tokens.css。禁止在此写组件外观（组件样式在 components.css）。
+   ========================================================================== */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  height: 100%;
+  /* 中文正文不得小于 14px；1rem = 16px 作为字号基准 */
+  font-size: 16px;
+  text-size-adjust: 100%;
+  -webkit-text-size-adjust: 100%;
+  background: var(--c-bg);
+}
+
+body {
+  margin: 0;
+  min-height: 100%;
+  background: var(--c-bg);
+  color: var(--c-text);
+  font-family: var(--font-sans);
+  font-size: var(--fs-14);
+  line-height: var(--lh-body);
+  font-weight: var(--fw-regular);
+  letter-spacing: var(--tracking-normal);
+  /* 中英混排：允许在 CJK 与拉丁之间断行，但不得从单词中间断开 */
+  line-break: normal;
+  overflow-wrap: break-word;
+  word-break: normal;
+  hanging-punctuation: allow-end;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* 深色模式下表单控件（date/number/select 下拉）跟随主题 */
+:root {
+  accent-color: var(--c-primary-solid);
+}
+
+::selection {
+  background: var(--c-selection);
+  color: var(--c-text);
+}
+
+/* ----------------------------------------------------------------------------
+   标题：中文标题字重不宜过重，层级靠字号 + 间距 + 颜色，不靠大色块
+   -------------------------------------------------------------------------- */
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  margin: 0;
+  font-weight: var(--fw-semibold);
+  line-height: var(--lh-tight);
+  letter-spacing: var(--tracking-tight);
+  color: var(--c-text);
+  text-wrap: balance;
+}
+
+h1 {
+  font-size: var(--fs-24);
+}
+h2 {
+  font-size: var(--fs-20);
+}
+h3 {
+  font-size: var(--fs-16);
+}
+h4 {
+  font-size: var(--fs-14);
+}
+h5,
+h6 {
+  font-size: var(--fs-13);
+}
+
+p {
+  margin: 0;
+  text-wrap: pretty;
+}
+
+ul,
+ol {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+figure,
+blockquote,
+dl,
+dd {
+  margin: 0;
+}
+
+/* 链接：正文链接必须可用键盘聚焦 */
+a {
+  color: var(--c-text-link);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  text-decoration-thickness: 1px;
+}
+
+a:hover {
+  color: var(--c-primary-hover);
+}
+
+/* ----------------------------------------------------------------------------
+   表单元素继承字体与颜色（浏览器默认不继承）
+   -------------------------------------------------------------------------- */
+button,
+input,
+select,
+textarea,
+optgroup {
+  font: inherit;
+  color: inherit;
+  letter-spacing: inherit;
+}
+
+button {
+  cursor: pointer;
+  background: none;
+  border: 0;
+  padding: 0;
+}
+
+button:disabled,
+input:disabled,
+select:disabled,
+textarea:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+/* 数字列对齐（字符数、token 数、页码） */
+input[type="number"],
+.ui-mono,
+.doc__num {
+  font-variant-numeric: tabular-nums;
+}
+
+textarea {
+  resize: vertical;
+}
+
+fieldset {
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+legend {
+  padding: 0;
+}
+
+/* 图片：证件照 / 图标 */
+img,
+svg {
+  display: block;
+  max-width: 100%;
+}
+
+/* ----------------------------------------------------------------------------
+   可访问性基线
+   - 焦点环永远可见，不许 outline:none
+   - 只在键盘导航时显示（:focus-visible），鼠标点击不打扰
+   -------------------------------------------------------------------------- */
+:focus {
+  outline: none;
+}
+
+:focus-visible,
+.ui-focusable:focus-visible {
+  outline: 2px solid var(--c-focus);
+  outline-offset: 2px;
+  border-radius: var(--r-xs);
+}
+
+/* 供 JS 聚焦容器（模态/抽屉）时使用，视觉上不显示焦点环 */
+[tabindex="-1"]:focus {
+  outline: none;
+}
+
+/* 屏幕阅读器专用文本 */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* 跳到主内容（键盘第一个 Tab 位） */
+.skip-link {
+  position: absolute;
+  left: var(--sp-4);
+  top: -60px;
+  z-index: calc(var(--z-modal) + 1);
+  padding: var(--sp-3) var(--sp-6);
+  background: var(--c-surface);
+  color: var(--c-text);
+  border: 1px solid var(--c-border-strong);
+  border-radius: var(--r-sm);
+  box-shadow: var(--sh-2);
+  transition: top var(--dur-2) var(--ease);
+}
+
+.skip-link:focus {
+  top: var(--sp-4);
+}
+
+/* ----------------------------------------------------------------------------
+   滚动条：细、可见、不抢戏
+   -------------------------------------------------------------------------- */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--c-scrollbar) transparent;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--c-scrollbar);
+  border: 3px solid transparent;
+  background-clip: padding-box;
+  border-radius: var(--r-pill);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--c-border-strong);
+  background-clip: padding-box;
+}
+
+/* ----------------------------------------------------------------------------
+   动效偏好
+   -------------------------------------------------------------------------- */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ----------------------------------------------------------------------------
+   工具类（只放排版/排布，不放主题色）
+   -------------------------------------------------------------------------- */
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-6);
+}
+
+.stack--tight {
+  gap: var(--sp-3);
+}
+
+.stack--loose {
+  gap: var(--sp-9);
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-4);
+  flex-wrap: wrap;
+}
+
+.row--nowrap {
+  flex-wrap: nowrap;
+}
+
+.row--between {
+  justify-content: space-between;
+}
+
+.row--end {
+  justify-content: flex-end;
+}
+
+.col {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  min-width: 0;
+}
+
+.grow {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.mono {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: var(--fs-13);
+}
+
+.muted {
+  color: var(--c-text-2);
+}
+
+.subtle {
+  color: var(--c-text-3);
+}
+
+.small {
+  font-size: var(--fs-12);
+}
+
+.tiny {
+  font-size: var(--fs-11);
+}
+
+.strong {
+  font-weight: var(--fw-semibold);
+}
+
+.nowrap {
+  white-space: nowrap;
+}
+
+.truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* 中英混排基准段落：证明混排不断行、数字不跳行 */
+.prose {
+  max-width: var(--w-prose);
+  line-height: var(--lh-body);
+}
+
+.prose p + p {
+  margin-top: var(--sp-5);
+}
+
+/* 分隔线 */
+.hr {
+  height: 1px;
+  background: var(--c-border);
+  border: 0;
+  margin: var(--sp-7) 0;
+}
+
+/* 视觉隐藏但保持布局占位（加载骨架切换时防跳动） */
+.invisible {
+  visibility: hidden;
+}
+
+/* 打印时隐藏的界面装饰 */
+@media print {
+  .no-print {
+    display: none !important;
+  }
+}

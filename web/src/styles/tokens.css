@@ -1,0 +1,216 @@
+/* ============================================================================
+   tokens.css — 设计 token（唯一来源）
+   简历打包系统 · v1.0 · 2026-10-23 · owner: uier
+   ----------------------------------------------------------------------------
+   约定
+   1. 本文件只声明 CSS 自定义属性，不产生任何视觉输出（除 color-scheme）。
+   2. 所有颜色一律用 light-dark(浅色, 深色) 成对声明：
+      默认跟随系统 prefers-color-scheme；显式主题用 [data-theme="light"|"dark"]，
+      局部深色区域（设计预览页的深浅色对照）用 .theme-dark。
+      因此深色值只有一份，不存在两套变量不同步的问题。
+   3. 组件 CSS 只允许消费 var(--…)，禁止出现字面色值。新增颜色 = 新增 token。
+   4. 目标运行时：Chrome ≥ 123（light-dark() 自 123 起可用）。
+      断网可用，字体全部使用系统字体栈，零外部请求。
+   ========================================================================== */
+
+:root {
+  color-scheme: light dark;
+
+  /* -------------------------------------------------------------------------
+     1. 字体栈（中文优先，英文/数字回退到系统无衬线；不允许 @font-face 外链）
+     ------------------------------------------------------------------------- */
+  --font-sans:
+    -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB",
+    "Source Han Sans SC", "Noto Sans CJK SC", "Microsoft YaHei", "Segoe UI",
+    Roboto, Helvetica, Arial, sans-serif;
+  /* 简历正文（导出稿预览 / A4 打印）：中文衬线优先，英文 Times 系 */
+  --font-doc:
+    "Songti SC", "Source Han Serif SC", "Noto Serif CJK SC", "STSong", SimSun,
+    Georgia, "Times New Roman", serif;
+  /* 英文简历正文：Times 系优先，中文回退保证混排不错行 */
+  --font-doc-en:
+    Georgia, "Times New Roman", Cambria, "Songti SC", "Source Han Serif SC",
+    serif;
+  --font-mono:
+    ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas,
+    "Liberation Mono", monospace;
+
+  --fs-11: 11px;
+  --fs-12: 12px;
+  --fs-13: 13px;
+  --fs-14: 14px; /* 应用正文基准 */
+  --fs-15: 15px;
+  --fs-16: 16px;
+  --fs-20: 20px;
+  --fs-24: 24px;
+  --fs-30: 30px;
+  --fs-38: 38px;
+
+  --lh-tight: 1.3;
+  --lh-snug: 1.45;
+  --lh-body: 1.65; /* 中文正文下限 1.5，此处取更舒适值 */
+  --lh-loose: 1.85;
+
+  --fw-regular: 400;
+  --fw-medium: 500;
+  --fw-semibold: 600;
+  --fw-bold: 700;
+
+  --tracking-tight: -0.01em;
+  --tracking-normal: 0;
+  --tracking-cjk: 0.01em;
+
+  /* -------------------------------------------------------------------------
+     2. 颜色（浅 / 深成对）
+     ------------------------------------------------------------------------- */
+  /* 背景层 */
+  --c-bg: light-dark(#f4f4f2, #121214);
+  --c-bg-sunken: light-dark(#ebebe7, #0c0c0e);
+  --c-surface: light-dark(#ffffff, #1a1a1d);
+  --c-surface-2: light-dark(#fafaf8, #202024);
+  --c-surface-3: light-dark(#f0f0ec, #26262b);
+  --c-surface-hover: light-dark(#f6f6f3, #24242a);
+
+  /* 描边 */
+  --c-border: light-dark(#e3e2de, #303036);
+  --c-border-strong: light-dark(#c9c8c2, #47474f);
+  --c-border-input: light-dark(#d5d4cf, #3c3c44);
+
+  /* 文字 */
+  --c-text: light-dark(#1a1a18, #ececee);
+  --c-text-2: light-dark(#55554f, #a8a8b1);
+  --c-text-3: light-dark(#82827a, #7c7c85);
+  --c-text-inv: light-dark(#ffffff, #141416);
+  --c-text-link: light-dark(#2340ad, #b6c6ff);
+
+  /* 主色 */
+  --c-primary: light-dark(#2a4fd0, #9db3ff);
+  --c-primary-hover: light-dark(#2340ad, #b6c6ff);
+  --c-primary-solid: light-dark(#2a4fd0, #3d5bd6);
+  --c-primary-solid-hover: light-dark(#2340ad, #4a68e2);
+  --c-primary-solid-active: light-dark(#1c358f, #3350c4);
+  --c-on-primary: #ffffff;
+  --c-primary-soft: light-dark(#eef1fd, #1b2340);
+  --c-primary-soft-border: light-dark(#c8d3f7, #33406e);
+
+  /* 语义色（文字色 / 浅底 / 描边 三件套） */
+  --c-success: light-dark(#14704a, #5ed29a);
+  --c-success-soft: light-dark(#e7f5ee, #14281f);
+  --c-success-border: light-dark(#b7e0cb, #24543c);
+
+  --c-warn: light-dark(#8a5300, #e8b15c);
+  --c-warn-soft: light-dark(#fdf3e1, #2a2113);
+  --c-warn-border: light-dark(#ecd3a8, #5a4420);
+
+  --c-danger: light-dark(#b3261e, #ff9189);
+  --c-danger-soft: light-dark(#fdecea, #2c1614);
+  --c-danger-border: light-dark(#f3c4c0, #5c2a26);
+
+  --c-info: light-dark(#1c5cb8, #86b6ff);
+  --c-info-soft: light-dark(#eaf2fd, #14243c);
+  --c-info-border: light-dark(#c3d9f7, #2a4368);
+
+  --c-neutral-soft: light-dark(#f0f0ec, #26262b);
+  --c-neutral-border: light-dark(#deddd8, #38383f);
+
+  /* 交互辅助 */
+  --c-focus: light-dark(#2a4fd0, #9db3ff);
+  --c-overlay: light-dark(rgba(16, 16, 19, 0.42), rgba(0, 0, 0, 0.62));
+  --c-selection: light-dark(#dbe3ff, #2b3866);
+  --c-scrollbar: light-dark(#d3d2cc, #3a3a42);
+
+  /* -------------------------------------------------------------------------
+     3. 间距（4px 基准）
+     ------------------------------------------------------------------------- */
+  --sp-0: 0;
+  --sp-1: 2px;
+  --sp-2: 4px;
+  --sp-3: 6px;
+  --sp-4: 8px;
+  --sp-5: 10px;
+  --sp-6: 12px;
+  --sp-7: 16px;
+  --sp-8: 20px;
+  --sp-9: 24px;
+  --sp-10: 32px;
+  --sp-11: 40px;
+  --sp-12: 48px;
+  --sp-13: 64px;
+
+  /* -------------------------------------------------------------------------
+     4. 圆角 / 阴影 / 动效
+     ------------------------------------------------------------------------- */
+  --r-xs: 4px;
+  --r-sm: 6px;
+  --r-md: 8px;
+  --r-lg: 12px;
+  --r-xl: 16px;
+  --r-pill: 999px;
+
+  --sh-1:
+    0 1px 2px light-dark(rgba(16, 16, 19, 0.06), rgba(0, 0, 0, 0.5)),
+    0 1px 1px light-dark(rgba(16, 16, 19, 0.04), rgba(0, 0, 0, 0.35));
+  --sh-2:
+    0 4px 14px light-dark(rgba(16, 16, 19, 0.1), rgba(0, 0, 0, 0.55)),
+    0 1px 2px light-dark(rgba(16, 16, 19, 0.06), rgba(0, 0, 0, 0.4));
+  --sh-3:
+    0 16px 40px light-dark(rgba(16, 16, 19, 0.18), rgba(0, 0, 0, 0.65)),
+    0 2px 8px light-dark(rgba(16, 16, 19, 0.08), rgba(0, 0, 0, 0.45));
+  --sh-paper:
+    0 1px 3px light-dark(rgba(16, 16, 19, 0.14), rgba(0, 0, 0, 0.6)),
+    0 12px 28px light-dark(rgba(16, 16, 19, 0.1), rgba(0, 0, 0, 0.5));
+
+  --dur-1: 120ms;
+  --dur-2: 180ms;
+  --dur-3: 260ms;
+  --ease: cubic-bezier(0.2, 0, 0, 1);
+
+  /* -------------------------------------------------------------------------
+     5. 尺寸与层级
+     ------------------------------------------------------------------------- */
+  --w-nav: 208px;
+  --w-nav-collapsed: 56px;
+  --h-status: 34px;
+  --h-topbar: 44px;
+  --h-control-sm: 26px;
+  --h-control: 32px;
+  --h-control-lg: 38px;
+  --w-drawer: 560px;
+  --w-side-left: 260px;
+  --w-side-right: 380px;
+  --w-side-jobs: 320px;
+  --w-modal: 720px;
+  --w-page-max: 1400px;
+  --w-prose: 68ch;
+
+  --z-base: 0;
+  --z-nav: 10;
+  --z-topbar: 20;
+  --z-drawer: 40;
+  --z-toast: 60;
+  --z-modal: 80;
+
+  /* 焦点环：双层，保证在任何底色上都可见 */
+  --ring: 0 0 0 2px var(--c-surface), 0 0 0 4px var(--c-focus);
+  --ring-inset: inset 0 0 0 2px var(--c-focus);
+}
+
+/* 显式浅色（覆盖系统深色） */
+[data-theme="light"] {
+  color-scheme: light;
+}
+
+/* 显式深色 */
+[data-theme="dark"] {
+  color-scheme: dark;
+}
+
+/* 局部深色区域（预览页并排对照用），不改变文档主题 */
+.theme-dark {
+  color-scheme: dark;
+}
+
+/* 局部浅色区域 */
+.theme-light {
+  color-scheme: light;
+}

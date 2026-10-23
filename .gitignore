@@ -1,0 +1,50 @@
+# ==== 隐私与运行时数据：绝不入库（含 API Key 与用户真实简历/导出件）====
+.env
+.env.*
+!.env.example
+data/
+exports/
+tmp/
+
+# 简历与文档原件（即便误放在 data/ 之外也不入库）
+*.pdf
+*.docx
+*.doc
+*.rtf
+!tests/fixtures/**/*.pdf
+!tests/fixtures/**/*.docx
+
+# ==== Python ====
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# ==== 前端 ====
+node_modules/
+dist/
+.vite/
+
+# ==== macOS / 编辑器 ====
+.DS_Store
+.AppleDouble
+.LSOverride
+.idea/
+.vscode/
+*.swp
+*~
+
+# ==== 日志 ====
+*.log
+logs/
+
+# ==== 设计过程截图（uier 产出，体积大且非交付物）====
+web/.shots/
+*.shot.png
+
+# 导入 lan 测试夹具（docx/html/pdf 样张）：允许入库，仅限该目录
+!server/tests/fixtures/**

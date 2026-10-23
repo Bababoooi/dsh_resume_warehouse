@@ -1,0 +1,516 @@
+/* ============================================================================
+   print.css — 简历文档版式（A4）与打印规则
+   同时用于：
+   1) 构建页的简历预览（服务端渲染页面 / 设计预览页里的样张）——屏幕上是纸张；
+   2) ⌘P 兜底：@media print 必须与 PDF 的 A4 版式一致（页边距与字号同源）。
+   约束：中文用 --font-doc（宋体优先），英文用 --font-doc-en（Times 优先）；
+        字号/行距用 pt，保证 PDF 与屏幕预览同构；不允许外链字体。
+
+   例外说明（本文件是唯一允许出现字面色值的样式）：
+   纸张永远白底黑字 —— 它模拟的是导出产物本身，不能跟随深浅色主题，
+   否则用户会误判导出效果。因此 .doc 作用域内固定 color-scheme: light，
+   使用固定墨色，不消费 --c-text / --c-surface。
+   ========================================================================== */
+
+@page {
+  size: A4;
+  /* 页边距不交给 @page，而是由 .doc 的四边内边距承担 ——
+     因为「原件密度」的左右上三边只有 5pt / 2.9pt 级，四边不等，
+     @page 只能给一套对称值，无法表达原件版式。margin:0 + .doc padding 才是可控的。 */
+  margin: 0;
+}
+
+.doc {
+  /* 纸张参数（导出引擎与打印共用同一组数值） */
+  /* 版式密度（两档，见 docs/DESIGN.md §12）
+     original（默认）：照抄用户原件 PDF 的实测页边距，目标「单页 + 正文 ≥10pt」
+     relaxed：上下 16mm / 左右 15mm，给内容少的人用，允许排到第 2 页
+     照片不参与密度：89.28pt / 距顶 3.82pt / 距右缘 9.13pt 永远不动 ——
+     原件里照片顶边（3.82pt）比上边距（8.3pt）还高，这是原件本来的样子。 */
+  --doc-pad-t: 8.3pt;
+  --doc-pad-r: 15.6pt;
+  --doc-pad-b: 16.4pt;
+  --doc-pad-l: 14.8pt;
+  /* 唯一常量源：契约 docs/ARCHITECTURE.md §7.5.1 的 --doc-body / --doc-leading。
+     --doc-fs ↔ 契约「正文中位字号」（首档 11.0pt）
+     --doc-lh ↔ 契约「行距比 leading_ratio」（1.15，全档恒定 —— 行距比不随档位变，
+                否则就等于「用行距撑开凑行数」，也正是 9.5pt/1.45 那次翻车的成因）
+     阶梯（降档时才用，见 §7.5.1 规则 7）：11.0/1.15 → 10.5/1.15 → 10.0/1.15 → 9.5/1.15（紧急档）
+     ⚠ 不要在这里另写一套阶梯（DESIGN-BRIEF.md:186 明令禁止）。 */
+  --doc-fs: 11pt;
+  --doc-lh: 1.15;
+  --doc-h1: 19pt;
+  --doc-h2: 12pt;
+  --doc-ink: #17171a;
+  --doc-ink-2: #4a4a50;
+  --doc-rule: #2a2a2e;
+  --doc-hairline: #e2e2e2;
+
+  /* 照片位：从原始 PDF 内容流反算（MediaBox [0, 7.83, 595.5, 850.08]，
+     页面流 0.24 缩放 + Y 翻转 + 平移到页顶）的权威几何 ——
+       照片框 89.28 × 89.28pt（≈31.5mm）正方形
+       左边 x0 = 497.08pt；距页顶 3.82pt；距页面右缘 9.13pt（真实右边距）
+     注：98.42 = 595.5 − 497.08 是「照片左边到页右缘」的距离，不是右边距，
+     不要拿它当 right 偏移。绝对定位的 right 以 padding box 外缘为界，
+     而 .doc 的 padding box 外缘就是页边，所以这里直接写 9.1pt。 */
+  --doc-photo-size: 89.28pt;
+  --doc-photo-top: 3.82pt;
+  --doc-photo-right: 9.13pt;
+  position: relative;
+
+  color-scheme: light;
+  width: 210mm;
+  min-height: 297mm;
+  background: #ffffff;
+  color: var(--doc-ink);
+  font-family: var(--font-doc);
+  font-size: var(--doc-fs);
+  line-height: var(--doc-lh);
+  letter-spacing: 0.01em;
+  padding: var(--doc-pad-t) var(--doc-pad-r) var(--doc-pad-b) var(--doc-pad-l);
+  box-shadow: var(--sh-paper);
+  /* 中英混排：数字/英文使用同一基线，不额外加空格也能稳定断行 */
+  text-align: justify;
+  text-justify: inter-ideograph;
+  word-break: normal;
+  overflow-wrap: break-word;
+  hyphens: manual;
+}
+
+.doc--en {
+  font-family: var(--font-doc-en);
+  text-align: left;
+  text-justify: none;
+  letter-spacing: 0;
+}
+
+/* 内容超出一页时的自动降级档位（服务端按渲染色量选择；9.5pt 是可读性下限） */
+/* 紧急档（第 4 档）：只有 11.0 → 10.5 → 10.0 都装不下才允许，且必须带降档链 */
+.doc--dense {
+  --doc-fs: 9.5pt;
+  --doc-lh: 1.15;
+  --doc-h1: 17pt;
+  --doc-h2: 10.5pt;
+}
+
+/* 版式密度：默认 original（= 上面 .doc 的那组变量），显式类便于服务端/预览标注。
+   注意：original 档**不在这里重复声明数值** —— 契约 §7.5.1 要求「这些数值只有一处」，
+   重复一份常量会被 t11 的「常量唯一来源」判据判为漂移。 */
+.doc--density-original {
+  --doc-density-name: original;
+}
+
+/* relaxed 档：上下 16mm / 左右 15mm（契约 §7.5.1），允许排到第 2 页 */
+.doc--density-relaxed {
+  --doc-density-name: relaxed;
+  --doc-pad-t: 16mm;
+  --doc-pad-r: 15mm;
+  --doc-pad-b: 16mm;
+  --doc-pad-l: 15mm;
+}
+
+/* 第 2 档 */
+.doc--compact {
+  --doc-fs: 10.5pt;
+  --doc-lh: 1.15;
+}
+
+/* 第 3 档 */
+.doc--tight {
+  --doc-fs: 10pt;
+  --doc-lh: 1.15;
+}
+
+/* 文档头部 */
+.doc__header {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  /* 给右上角照片让位：照片伸出内容区的那一段 + 间距。
+     照片距页右缘 9.13pt、宽 89.28pt → 照片左缘离页右 98.41pt；
+     内容区右缘离页右 = --doc-pad-r（original 档 15.6pt），
+     故照片侵入内容区 98.41 − 15.6 = 82.81pt，再加 8pt 呼吸位 = 90.81pt。
+     relaxed 档下 --doc-pad-r 变 15mm（42.52pt），让位自动收到 66.9pt，不用另写一份。
+     关闭照片时同一留白由 .doc--no-photo 归零，版式不错位。 */
+  padding-right: calc(var(--doc-photo-size) + var(--doc-photo-right) - var(--doc-pad-r) + 8pt);
+  padding-bottom: 8px;
+  border-bottom: 1.2px solid var(--doc-rule);
+  margin-bottom: 12px;
+}
+
+.doc--no-photo .doc__header {
+  padding-right: 0;
+}
+
+.doc__header-main {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.doc__name {
+  font-size: var(--doc-h1);
+  font-weight: 700;
+  line-height: 1.25;
+  letter-spacing: 0.06em;
+  margin: 0 0 4px;
+  color: var(--doc-ink);
+}
+
+.doc--en .doc__name {
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.doc__headline {
+  font-size: calc(var(--doc-fs) * 0.94);
+  color: var(--doc-ink-2);
+  margin-bottom: 6px;
+}
+
+.doc__contact {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  font-size: calc(var(--doc-fs) * 0.86);
+  color: var(--doc-ink-2);
+  font-variant-numeric: tabular-nums;
+}
+
+.doc__contact-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+}
+
+.doc__photo {
+  position: absolute;
+  top: var(--doc-photo-top);
+  right: var(--doc-photo-right);
+  width: var(--doc-photo-size);
+  height: var(--doc-photo-size);
+  object-fit: cover;
+  object-position: center 20%;
+  border: 0.5px solid #cfcfcf;
+  background: #f4f4f4;
+  z-index: 1;
+}
+
+.doc__photo--ph {
+  display: grid;
+  place-items: center;
+  font-size: 7.5pt;
+  color: #9a9a9a;
+  font-family: var(--font-sans);
+}
+
+/* 章节 */
+.doc__section {
+  margin-top: 11px;
+  break-inside: auto;
+}
+
+.doc__section-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: var(--doc-h2);
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  color: var(--doc-ink);
+  margin: 0 0 5px;
+  padding-bottom: 2.5px;
+  border-bottom: 0.8px solid var(--doc-rule);
+  break-after: avoid;
+}
+
+.doc--en .doc__section-title {
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.doc__section-title::before {
+  content: "";
+  width: 3pt;
+  height: 3pt;
+  background: var(--doc-rule);
+  border-radius: 50%;
+  flex: 0 0 auto;
+}
+
+/* 经历条目：org · role …… 日期 同行基线对齐（契约 §7.5.1 规则 8）
+   条目头必须占 1 行 —— 这是「33 行 vs 45 行」的主要差距来源。
+   日期列宽度按契约取版心的 12%–22%（没有第二条绝对常量），超出就省略号截断。 */
+.doc__entry {
+  margin-bottom: 7px;
+  break-inside: avoid;
+}
+
+.doc__entry-head {
+  display: flex;
+  align-items: baseline;
+  gap: 8pt;
+  min-width: 0;
+}
+
+.doc__entry-title {
+  flex: 1 1 auto;
+  font-weight: 700;
+  font-size: var(--doc-fs);
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.doc__entry-org {
+  font-size: var(--doc-fs);
+  color: var(--doc-ink-2);
+  min-width: 0;
+}
+
+.doc__entry-meta,
+.doc__entry-date {
+  flex: 0 1 auto;
+  min-width: 12%;
+  max-width: 22%;
+  font-size: var(--doc-fs);
+  color: var(--doc-ink-2);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.doc__entry-sub {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 10px;
+  font-size: calc(var(--doc-fs) * 0.86);
+  color: var(--doc-ink-2);
+  margin-bottom: 2px;
+}
+
+/* bullet：中文用「·」，英文用「•」；缩进用 hanging indent 保证折行对齐 */
+.doc__bullets {
+  margin: 2px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.doc__bullet {
+  position: relative;
+  padding-left: 1.1em;
+  margin-bottom: 1.5px;
+  font-size: var(--doc-fs);
+  line-height: var(--doc-lh);
+  break-inside: avoid;
+}
+
+.doc__bullet::before {
+  content: "·";
+  position: absolute;
+  left: 0.28em;
+  top: 0;
+  font-weight: 700;
+}
+
+.doc--en .doc__bullet::before {
+  content: "•";
+  left: 0.18em;
+}
+
+.doc__bullet--lead {
+  padding-left: 0;
+}
+
+.doc__bullet--lead::before {
+  content: none;
+}
+
+/* 教育段整段文字（专业成绩 / 主修课程）：整段保留，行首不加项目符号 */
+.doc__fact {
+  margin: 0 0 1.5pt;
+  padding-left: 1.1em;
+  font-size: var(--doc-fs);
+  line-height: var(--doc-lh);
+  text-align: justify;
+  text-justify: inter-ideograph;
+  color: var(--doc-ink-2);
+  break-inside: avoid;
+}
+
+/* 数字高亮只是校对界面的辅助，导出稿里必须回到普通正文（不改变字重/颜色/字体） */
+.doc mark.num {
+  background: none;
+  color: inherit;
+  font-family: inherit;
+  font-size: inherit;
+  font-weight: inherit;
+  padding: 0;
+}
+
+.doc--en .doc__fact {
+  text-align: left;
+  text-justify: auto;
+}
+
+/* 技能标签 */
+.doc__tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px 6px;
+  font-size: calc(var(--doc-fs) * 0.9);
+}
+
+.doc__tag {
+  padding: 0 4px;
+  border: 0.5px solid #d8d8d8;
+  border-radius: 1mm;
+  color: var(--doc-ink-2);
+  white-space: nowrap;
+}
+
+/* 缺失槽位占位：屏幕橙色，打印灰虚线（提醒但可读） */
+.doc__ph {
+  display: inline-block;
+  padding: 0 3px;
+  border: 1px dashed #d97706;
+  border-radius: 1mm;
+  background: #fff7ed;
+  color: #9a3412;
+  font-family: var(--font-mono);
+  font-size: 8.5pt;
+  white-space: nowrap;
+}
+
+.doc__ph::before {
+  content: "⟨";
+}
+
+.doc__ph::after {
+  content: "⟩";
+}
+
+/* 页脚：页码（导出时由渲染引擎写，屏幕预览只读展示） */
+.doc__footer {
+  margin-top: 10px;
+  padding-top: 4px;
+  border-top: 0.5px solid #e2e2e2;
+  display: flex;
+  justify-content: space-between;
+  font-size: 7.5pt;
+  color: #8a8a8a;
+  font-family: var(--font-sans);
+}
+
+/* 纸张容器（屏幕预览的舞台） */
+.paper-stage {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  gap: var(--sp-8);
+  padding: var(--sp-8);
+  background: var(--c-bg-sunken);
+  border-radius: var(--r-md);
+  overflow: auto;
+}
+
+.paper-stage__col {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+  align-items: center;
+  flex: 0 0 auto;
+}
+
+.paper-stage__caption {
+  font-size: var(--fs-11);
+  color: var(--c-text-3);
+  font-family: var(--font-sans);
+}
+
+/* ----------------------------------------------------------------------------
+   打印：界面元素全部隐藏，只留纸张；页边距交给 @page，避免叠加
+   -------------------------------------------------------------------------- */
+@media print {
+  html,
+  body {
+    background: #fff !important;
+    height: auto;
+  }
+
+  .app {
+    display: block;
+    height: auto;
+    min-height: 0;
+    overflow: visible;
+  }
+
+  .app__body {
+    display: block;
+    min-height: 0;
+  }
+
+  .sidenav,
+  .topbar,
+  .app__statusbar,
+  .toast-layer,
+  .modal-layer,
+  .paper-stage__caption,
+  .no-print {
+    display: none !important;
+  }
+
+  .main,
+  .main__scroll,
+  .page,
+  .paper-stage,
+  .paper-stage__col {
+    display: block;
+    overflow: visible;
+    padding: 0;
+    margin: 0;
+    max-width: none;
+    background: #fff;
+    box-shadow: none;
+  }
+
+  .doc {
+    width: 210mm;
+    min-height: 0;
+    margin: 0;
+    box-shadow: none;
+    background: #fff;
+    /* 保留四边内边距：它就是页边距（@page margin 已为 0） */
+  }
+
+  .doc__section {
+    break-inside: auto;
+  }
+
+  /* 打印时链接保持墨色，不显示下划线 */
+  a {
+    color: inherit;
+    text-decoration: none;
+  }
+}
+/* 技能：整句原文逐行（不拆 tag、不用竖线分隔） */
+.doc__skill-line {
+  margin: 0 0 1.6pt;
+  line-height: 1.55;
+  text-align: justify;
+  text-justify: inter-ideograph;
+  overflow-wrap: break-word;
+}
+
+.doc__skill-line:last-child {
+  margin-bottom: 0;
+}
+
+.doc--en .doc__skill-line {
+  text-align: left;
+  text-justify: auto;
+}
+
