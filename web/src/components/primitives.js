@@ -8,7 +8,7 @@
  *  - 所有用户可见文本一律走 Text 节点（h() 保证）。
  */
 
-import { h, cx, trapFocus, focusFirst } from "./dom.js";
+import { h, cx, trapFocus, focusFirst, escToClose } from "./dom.js";
 import { icon } from "./icons.js";
 
 /* ---------------------------------------------------------------- 按钮 */
@@ -671,6 +671,20 @@ export function modal(p = {}) {
   );
 
   layer._dialog = dialog;
+
+  // 打开即把焦点交给对话框（读屏从标题开始念），Esc 关闭。
+  // 放在 rAF 里是因为调用方通常在这之后才把 layer 挂进 #layer-root。
+  requestAnimationFrame(() => {
+    if (!layer.isConnected) return;
+    if (!dialog.hasAttribute("tabindex")) dialog.setAttribute("tabindex", "-1");
+    try {
+      dialog.focus({ preventScroll: true });
+    } catch {
+      /* 忽略：极端情况下元素不可聚焦，不影响关闭逻辑 */
+    }
+  });
+  if (typeof p.onClose === "function") escToClose(layer, p.onClose);
+
   return layer;
 }
 

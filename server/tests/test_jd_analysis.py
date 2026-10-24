@@ -2,7 +2,7 @@
 
 判据来源：
 
-* ``docs/maintainers/REVIEW-CHECKLIST.md`` ANL-01..08（尤其是 ANL-07 A 正例 7 条、ANL-08 B 反例 5 条）；
+* ``docs/REVIEW-CHECKLIST.md`` ANL-01..08（尤其是 ANL-07 A 正例 7 条、ANL-08 B 反例 5 条）；
 * ``docs/API-CONTRACT.md`` §6（analyze 202 + 428 前置、match 纯本地、requirements 人工修正）。
 
 样张与期望文件都在 ``data/``（被 gitignore）；文件缺失时用例 **SKIP 而不是 fail**，

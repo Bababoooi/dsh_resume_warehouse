@@ -7,9 +7,10 @@
 
 import { h } from "../components/dom.js";
 import { page } from "../components/layout.js";
-import { button, callout, card, emptyState, kv, textarea, input, select } from "../components/primitives.js";
+import { button, callout, card, emptyState, kv, skeleton, textarea, input, select } from "../components/primitives.js";
 import { api } from "../api.js";
-import { describeError, errorText } from "../components/errors.js";
+import { createAction, feedbackRegion } from "../components/feedback.js";
+import { toastWarn } from "../components/toast.js";
 
 const KIND_OPTIONS = [
   { value: "", label: "自动判断" },
@@ -21,6 +22,7 @@ const KIND_OPTIONS = [
 
 export function render() {
   const result = h("div", { class: "stack" });
+  const fb = feedbackRegion({ label: "拆解与保存状态" });
   const inputArea = textarea({
     id: "wb-text",
     rows: 10,
@@ -32,15 +34,76 @@ export function render() {
   async function draft() {
     const text = String(inputArea.value || "").trim();
     if (!text) {
-      result.replaceChildren(callout({ tone: "warn", title: "先把经历写下来", body: "哪怕两句话也行——时间、单位、你做了什么。" }));
-      return;
+      // 空文本不许静默：warn + 聚焦到文本框，已填内容一点不动（B1）
+      toastWarn("先把经历写下来", { message: "哪怕两句话也行——时间、单位、你做了什么。" });
+      fb.error(
+        { code: "VALIDATION_ERROR", message: "经历正文是空的。" },
+        { retryable: false, hint: "在下面的输入框写一段经历（时间 / 单位 / 你做了什么），再点「开始拆解」。" },
+      );
+      try {
+        inputArea.focus({ preventScroll: true });
+        inputArea.scrollIntoView({ block: "center" });
+      } catch {
+        /* 忽略 */
+      }
+      return { ok: false, skipped: true };
     }
-    result.replaceChildren(callout({ tone: "info", title: "正在本地拆解…", body: "不会发送给任何模型。" }));
+    fb.pending("正在本地拆解", "纯本机规则抽取，不会发送给任何模型。");
+    const slot = h("div.ux-skel-slot", { "aria-hidden": "true" }, skeleton({ title: true, lines: 4 }));
+    slot.style.setProperty("--ux-skel-h", "220px");
+    result.replaceChildren(slot);
     try {
       const data = await api.draftPackage(text);
       result.replaceChildren(renderDraft(data));
+      fb.success({
+        title: "拆解完成",
+        body: `识别出 ${(data.bullets || []).length} 条要点、${(data.outcomes || []).length} 个量化结果。核对后再保存。`,
+      });
+      return data;
     } catch (err) {
-      result.replaceChildren(callout({ tone: "danger", title: "拆解失败", body: errorText(err) }));
+      result.replaceChildren();
+      fb.error(err, {
+        retryable: true,
+        onRetry: () => draft(),
+        hint: "输入还在文本框里；重试会重新拆一遍，不会覆盖任何已保存的经历。",
+      });
+      throw err;
+    }
+  }
+
+  /** 保存草稿：四态 + 成功后给去经历库的链接；失败保留拆解结果与用户输入 */
+  async function saveDraft(data, pkg, bullets) {
+    fb.pending("正在存进经历库", "写本机数据库。");
+    try {
+      const created = await api.createPackage({
+        ...pkg,
+        variants: bullets.map((b, index) => ({
+          bullet_key: b.bullet_key || `b${index + 1}`,
+          tone: "original",
+          lang: data.lang || "zh",
+          text: b.fact,
+          verified: false,
+        })),
+      });
+      fb.success({
+        title: "已存进经历库",
+        body: h(
+          "div",
+          { class: "stack" },
+          h("div", null, `「${created.title}」共 ${bullets.length} 条要点，状态：${created.status === "ready" ? "可复用" : "草稿（要点未核实）"}`),
+          h("div", { class: "small muted" }, "要点未核实时，组装页会跳过这条；去经历库点「标记核实」即可。"),
+        ),
+        actions: [h("a", { class: "ui-btn ui-btn--secondary ui-btn--sm", href: "#/warehouse" }, "去经历库看看")],
+        announce: "已保存",
+      });
+      return created;
+    } catch (err) {
+      fb.error(err, {
+        retryable: true,
+        onRetry: () => saveDraft(data, pkg, bullets),
+        hint: "拆解结果还在下面；重试会再存一次，若已建成请先在经历库删掉重复的那条。",
+      });
+      throw err;
     }
   }
 
@@ -53,44 +116,11 @@ export function render() {
     if (titleField.value && !pkg.title) pkg.title = titleField.value;
     if (kindField.value) pkg.kind = kindField.value;
 
-    const saveButton = button({
+    const saveAction = createAction({
       label: `保存为经历（${bullets.length} 条要点）`,
       variant: "primary",
       icon: "save",
-      onClick: async () => {
-        saveButton.disabled = true;
-        try {
-          const created = await api.createPackage({
-            ...pkg,
-            variants: bullets.map((b, index) => ({
-              bullet_key: b.bullet_key || `b${index + 1}`,
-              tone: "original",
-              lang: data.lang || "zh",
-              text: b.fact,
-              verified: false,
-            })),
-          });
-          result.replaceChildren(
-            callout({
-              tone: "success",
-              title: "已存进经历库",
-              body: h(
-                "div",
-                { class: "stack" },
-                h("div", null, `「${created.title}」共 ${bullets.length} 条要点，状态：${created.status === "ready" ? "可复用" : "草稿（要点未核实）"}`),
-                h(
-                  "div",
-                  { class: "row" },
-                  button({ label: "去经历库看看", onClick: () => { location.hash = "#/warehouse"; } }),
-                ),
-              ),
-            }),
-          );
-        } catch (err) {
-          saveButton.disabled = false;
-          result.replaceChildren(callout({ tone: "danger", title: "保存失败", body: errorText(err) }));
-        }
-      },
+      onClick: () => saveDraft(data, pkg, bullets),
     });
 
     return h(
@@ -145,13 +175,24 @@ export function render() {
     );
   }
 
+  const draftAction = createAction({
+    label: "开始拆解",
+    variant: "primary",
+    icon: "sparkles",
+    onClick: () =>
+      draft().catch((err) => {
+        throw err;
+      }),
+  });
+
   return page({
     title: "工作台",
     desc: "把一段经历讲清楚，剩下的交给仓库。全部在本机完成。",
-    actions: button({ label: "开始拆解", variant: "primary", icon: "sparkles", onClick: draft }),
+    actions: draftAction.node,
     body: h(
       "div",
       { class: "stack" },
+      fb.node,
       card({
         title: "讲一段经历",
         desc: "时间、单位、你负责什么、做出了什么结果——写成一段话即可。",

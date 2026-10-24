@@ -7,9 +7,12 @@
 
 import { h } from "../components/dom.js";
 import { page } from "../components/layout.js";
-import { button, callout, card, checkbox, emptyState, input, statusDot, textarea } from "../components/primitives.js";
-import { api, itemsOf, waitJob } from "../api.js";
+import { button, callout, card, checkbox, emptyState, input, skeleton, statusDot, textarea } from "../components/primitives.js";
+import { api, itemsOf } from "../api.js";
 import { describeError, errorText } from "../components/errors.js";
+import { createAction, feedbackRegion } from "../components/feedback.js";
+import { forgetJob, jobProgress, listRememberedJobs, peekJob, recallJob, trackJob } from "../components/progress.js";
+import { toastWarn } from "../components/toast.js";
 
 const VERDICT_LABEL = { strong: "占优", medium: "势均", weak: "偏弱" };
 
@@ -17,6 +20,16 @@ export function render() {
   const listHost = h("div", { class: "stack" });
   const detailHost = h("div", { class: "stack" });
   const consentHost = h("div", null);
+  // 反馈区：保存/分析/失败说明统一落这里（aria-live 播报，可关闭，带重试）
+  const fb = feedbackRegion({ label: "岗位与分析状态" });
+
+  function skeletonRows(count = 4) {
+    const rows = h("div.ux-skel-rows", { "aria-hidden": "true" });
+    for (let i = 0; i < count; i += 1) rows.appendChild(skeleton({ title: true, lines: 2 }));
+    const slot = h("div.ux-skel-slot", { "aria-hidden": "true" }, rows);
+    slot.style.setProperty("--ux-skel-h", "64px");
+    return slot;
+  }
 
   const title = input({ id: "jd-title", placeholder: "岗位名，如：数据分析实习生" });
   const company = input({ id: "jd-company", placeholder: "公司名，如：星链数科（杭州）有限公司" });
@@ -31,16 +44,27 @@ export function render() {
   });
 
   async function loadList() {
+    const first = !listHost.dataset.loaded;
+    listHost.setAttribute("aria-busy", "true");
+    if (first) listHost.replaceChildren(skeletonRows(4));
     try {
       const data = await api.jds();
       const items = itemsOf(data);
       listHost.replaceChildren(
         items.length
           ? h("div", { class: "stack" }, items.map((jd) => jdRow(jd)))
-          : emptyState({ title: "还没有岗位", desc: "把想投的 JD 粘进来，先看清它到底要什么。" }),
+          : emptyState({
+              title: "还没有岗位",
+              desc: "把想投的 JD 粘进来，先看清它到底要什么。",
+              actions: h("a", { class: "ui-btn ui-btn--secondary", href: "#/builds" }, "看看组装页要什么"),
+            }),
       );
+      listHost.dataset.loaded = "1";
+      listHost.setAttribute("aria-busy", "false");
     } catch (err) {
-      listHost.replaceChildren(callout({ tone: "danger", title: "读不到岗位", body: errorText(err) }));
+      listHost.setAttribute("aria-busy", "false");
+      if (!listHost.dataset.loaded) listHost.replaceChildren();
+      fb.error(err, { onRetry: () => loadList(), retryable: true, hint: "本机后端可能没起来；点「重试」再读一次。" });
     }
   }
 
@@ -128,20 +152,29 @@ export function render() {
 
   async function createJd() {
     if (!String(text.value || "").trim()) {
-      detailHost.replaceChildren(callout({ tone: "warn", title: "先粘 JD", body: "至少要有一段岗位描述。" }));
-      return;
+      // 空 JD：warn + 聚焦到输入框，不静默、不清空已填内容
+      toastWarn("先粘一段 JD", { message: "至少要有一段岗位描述才能分析。" });
+      fb.error(
+        { code: "VALIDATION_ERROR", message: "JD 正文是空的。" },
+        { retryable: false, hint: "把岗位描述粘到「新增岗位」的文本框里，再点「保存并分析」。" },
+      );
+      try {
+        text.focus({ preventScroll: true });
+        text.scrollIntoView({ block: "center" });
+      } catch {
+        /* 忽略 */
+      }
+      return { ok: false, skipped: true };
     }
-    try {
-      const jd = await api.createJd({
-        title: String(title.value || "").trim() || "未命名岗位",
-        company_name: String(company.value || "").trim() || null,
-        raw_text: String(text.value),
-      });
-      await loadList();
-      await analyze(jd.id);
-    } catch (err) {
-      detailHost.replaceChildren(callout({ tone: "danger", title: "保存失败", body: errorText(err) }));
-    }
+    fb.pending("正在保存岗位", "写本机数据库，然后开始分析。");
+    const jd = await api.createJd({
+      title: String(title.value || "").trim() || "未命名岗位",
+      company_name: String(company.value || "").trim() || null,
+      raw_text: String(text.value),
+    });
+    await loadList();
+    await analyze(jd.id);
+    return jd;
   }
 
   /** LLM 路径：先预览字段清单，用户确认后才真正发送。 */
@@ -149,18 +182,150 @@ export function render() {
     try {
       if (!llmChoice.on) {
         const job = await api.analyzeJd(id, { method: "heuristic" });
-        await pollJob(job, id, "本地启发式分析（没走网络）");
+        await trackAnalyze(job, { jdId: id, label: "本地启发式分析" });
         return;
       }
-      detailHost.prepend(callout({ tone: "info", title: "正在生成「将发送字段清单」…", body: "这一步不会发送任何内容" }));
+      fb.pending("正在生成「将发送字段清单」", "这一步只有本机，不会发送任何内容。");
       const preview = await api.preview({ purpose: "jd_analyze", selections: { jd_id: id, include_summary: true } });
       showConsent(preview, id);
+      fb.idle();
     } catch (err) {
-      detailHost.replaceChildren(callout({ tone: "danger", title: "分析没开始", body: errorText(err) }));
+      fb.error(err, {
+        retryable: true,
+        onRetry: () => analyze(id),
+        hint: "预览没生成出来；重试会再请求一次清单，此时仍不会发送任何内容。",
+      });
     }
   }
 
+  /** 轮询一个分析任务：进度 + 阶段文案，失败给人话（不弹 JSON） */
+  function trackAnalyze(job, opts = {}) {
+    const jdId = opts.jdId;
+    const label = opts.label || "分析";
+    const jobId = (job && (job.job_id || job.id)) || "";
+    const scope = `jobs:analyze:${jdId}`;
+    if (!jobId) {
+      fb.error({ code: "INTERNAL", message: "后端没有返回 job_id，无法跟踪这次分析。" }, {
+        retryable: true,
+        onRetry: () => analyze(jdId),
+        hint: "可能后端版本较旧；重试一次，或重启本地服务。",
+      });
+      return Promise.resolve({ ok: false });
+    }
+    const panel = jobProgress({ kind: "jd_analyze", label, startedAt: Date.now() });
+    detailHost.replaceChildren(panel.node);
+    fb.pending(`${label}进行中`, "可以离开这一页，任务会继续；回来会自动接上。");
+    return new Promise((resolve) => {
+      trackJob({
+        jobId,
+        scope,
+        kind: "jd_analyze",
+        label,
+        onUpdate: (j, meta) => panel.update(j, meta && meta.elapsedMs),
+        onDone: async (done) => {
+          if (done && done.status === "succeeded") {
+            panel.done(done);
+            fb.success({ title: "分析完成", body: "需求与竞争力已刷新。" });
+            await loadList();
+            await showDetail(jdId);
+            resolve({ ok: true });
+            return;
+          }
+          const failure =
+            (done && done.error_json) || {
+              code: done && done.status === "interrupted" ? "JOB_INTERRUPTED" : "INTERNAL",
+              message: (done && done.message) || "",
+            };
+          detailHost.replaceChildren();
+          fb.error(failure, {
+            retryable: true,
+            onRetry: () => analyze(jdId),
+            hint: "这次分析没有留下半成品；重新分析一次即可，AI 路径会重新生成字段清单。",
+          });
+          resolve({ ok: false });
+        },
+        onError: (err) => {
+          detailHost.replaceChildren();
+          fb.error(err, { retryable: true, onRetry: () => analyze(jdId) });
+          resolve({ ok: false });
+        },
+        alive: () => detailHost.isConnected,
+      });
+    });
+  }
+
+  /** 切页回来：如果服务端还有这个岗位的分析在跑，把轮询接上 */
+  async function resumeAnalyze(jdId) {
+    const scope = `jobs:analyze:${jdId}`;
+    const rec = recallJob(scope);
+    if (!rec) return;
+    const current = await peekJob(rec.jobId);
+    if (!current) {
+      forgetJob(scope);
+      return;
+    }
+    if (["succeeded", "failed", "interrupted", "cancelled"].includes(current.status)) {
+      forgetJob(scope);
+      return;
+    }
+    // 还在跑：直接接管（提示一句，不重复播报每次轮询）
+    const panel = jobProgress({ kind: "jd_analyze", label: rec.label || "岗位分析", startedAt: rec.startedAt, showHint: true });
+    detailHost.replaceChildren(panel.node);
+    fb.pending("上一次分析还在继续", `已经接上后台任务（已跑 ${Math.max(1, Math.round((Date.now() - (rec.startedAt || Date.now())) / 1000))} 秒）。`);
+    trackJob({
+      jobId: rec.jobId,
+      scope,
+      kind: "jd_analyze",
+      label: rec.label || "岗位分析",
+      startedAt: rec.startedAt,
+      onUpdate: (j, meta) => panel.update(j, meta && meta.elapsedMs),
+      onDone: async (done) => {
+        if (done && done.status === "succeeded") {
+          panel.done(done);
+          fb.success({ title: "上次的分析完成了", body: "需求与竞争力已刷新。" });
+          await loadList();
+          await showDetail(jdId);
+        } else {
+          detailHost.replaceChildren();
+          fb.error((done && done.error_json) || { code: "INTERNAL", message: (done && done.message) || "" }, {
+            retryable: true,
+            onRetry: () => analyze(jdId),
+          });
+        }
+      },
+      onError: (err) => {
+        detailHost.replaceChildren();
+        fb.error(err, { retryable: true, onRetry: () => analyze(jdId) });
+      },
+      alive: () => detailHost.isConnected,
+    });
+  }
+
+  /** 用户点了「确认发送并分析」：真正的上云动作，只在 consent 确认后执行一次 */
+  async function sendConfirmed(preview, jdId, action) {
+    const res = await action.run(async () => {
+      const job = await api.analyzeJd(jdId, {
+        method: "llm",
+        preview_id: preview.preview_id,
+        expected_payload_sha256: preview.payload_sha256,
+      });
+      consentHost.replaceChildren();
+      await trackAnalyze(job, { jdId, label: "AI 分析" });
+      return job;
+    });
+    if (res.skipped || res.ok) return;
+    // 发送失败不给「自动重发」：consent 预览是一次性的，重试必须重新生成清单（UX-FEEDBACK-PLAN §6 R9）
+    fb.error(res.error, {
+      retryable: false,
+      actionLabel: "重新生成清单",
+      onAction: () => analyze(jdId),
+      hint: "这次没有发送成功。发送清单是一次性的，要再发一次得重新生成清单并重新确认。",
+    });
+  }
+
   function showConsent(preview, jdId) {
+    const confirmAction = createAction({ label: "确认发送并分析", variant: "primary" });
+    confirmAction.node.addEventListener("click", () => sendConfirmed(preview, jdId, confirmAction));
     const fields = preview.fields || [];
     const excluded = preview.excluded || {};
     const redactions = preview.redactions || [];
@@ -209,20 +374,7 @@ export function render() {
           h(
             "div",
             { class: "row" },
-            button({
-              label: "确认发送并分析",
-              variant: "primary",
-              onClick: async (ev) => {
-                ev.currentTarget.disabled = true;
-                consentHost.replaceChildren(callout({ tone: "info", title: "已发送，等待模型返回…", body: "失败会自动降级为本地启发式。" }));
-                try {
-                  const job = await api.analyzeJd(jdId, { method: "llm", preview_id: preview.preview_id, expected_payload_sha256: preview.payload_sha256 });
-                  await pollJob(job, jdId, "AI 分析");
-                } catch (err) {
-                  detailHost.replaceChildren(callout({ tone: "warn", title: "AI 分析没成功", body: errorText(err), actions: h("div", { class: "row" }, button({ label: "改用本地分析", onClick: () => api.analyzeJd(jdId, { method: "heuristic" }).then(() => showDetail(jdId)) })) }));
-                }
-              },
-            }),
+            confirmAction.node,
             button({ label: "不发送", variant: "ghost", onClick: () => consentHost.replaceChildren() }),
           ),
         ),
@@ -230,24 +382,39 @@ export function render() {
     );
   }
 
-  async function pollJob(job, jdId, label) {
-    const jobId = (job && (job.job_id || job.id)) || "";
-    detailHost.replaceChildren(callout({ tone: "info", title: `${label}进行中…`, body: "完成后自动刷新。" }));
-    const done = jobId ? await waitJob(jobId) : job;
-    if (done && done.status === "failed") {
-      detailHost.replaceChildren(callout({ tone: "danger", title: "分析失败", body: JSON.stringify(done.error_json || {}, null, 2) }));
-      return;
-    }
-    await loadList();
-    await showDetail(jdId);
-  }
+
+  const saveAnalyzeAction = createAction({
+    label: "保存并分析",
+    variant: "primary",
+    icon: "sparkles",
+    onClick: () =>
+      createJd().catch((err) => {
+        fb.error(err, {
+          retryable: true,
+          onRetry: () => createJd(),
+          hint: "JD 正文还在输入框里；重试会再存一条岗位记录，若已建成就先在列表里删掉旧的。",
+        });
+        throw err;
+      }),
+  });
 
   queueMicrotask(loadList);
+  queueMicrotask(async () => {
+    // 切页回来续上：只接管「还在跑」的分析任务
+    const scopes = new Set();
+    for (const rec of listRememberedJobs()) {
+      if (String(rec.scope || "").startsWith("jobs:analyze:")) scopes.add(rec.scope);
+    }
+    for (const scope of scopes) {
+      const jdId = scope.slice("jobs:analyze:".length);
+      if (jdId) await resumeAnalyze(jdId);
+    }
+  });
 
   return page({
     title: "岗位",
     desc: "粘 JD → 看清技能需求、院校门槛与你的竞争力差距。",
-    actions: button({ label: "保存并分析", variant: "primary", icon: "sparkles", onClick: createJd }),
+    actions: saveAnalyzeAction.node,
     body: h(
       "div",
       { class: "stack" },
@@ -256,6 +423,7 @@ export function render() {
         body: h("div", { class: "stack" }, h("div", { class: "row" }, title, company), text, useLlm),
       }),
       consentHost,
+      fb.node,
       detailHost,
       card({ title: "已保存的岗位", body: listHost }),
     ),

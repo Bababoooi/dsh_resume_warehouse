@@ -318,7 +318,7 @@ def _education_from_profile(
     title = school
     if lang == "en":
         # 英文习惯是「B.M. in Management Science」；空格直拼会读成
-        # 「Wuhan University B.M. Management Science」，缺连接词。
+        # 「Example University B.M. Management Science」，缺连接词。
         if degree and major:
             org = f"{degree} in {major}"
         else:

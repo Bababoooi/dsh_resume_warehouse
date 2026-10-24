@@ -2,9 +2,10 @@
 
 import { h } from "../components/dom.js";
 import { page } from "../components/layout.js";
-import { button, callout, card, emptyState, input, kv, statusDot, textarea, toggle } from "../components/primitives.js";
+import { button, callout, card, emptyState, input, kv, skeleton, statusDot, textarea, toggle } from "../components/primitives.js";
 import { api } from "../api.js";
-import { describeError, errorText } from "../components/errors.js";
+import { errorText } from "../components/errors.js";
+import { createAction, feedbackRegion } from "../components/feedback.js";
 
 const FIELDS = [
   ["name_zh", "中文姓名", "决定中文简历的文件名"],
@@ -26,10 +27,26 @@ export function render() {
   const formHost = h("div", { class: "stack" });
   const namingHost = h("div", null);
   const statusHost = h("div", null);
+  // 反馈区：保存结果、失败与「下一步」都落在这里（aria-live 播报，可关闭）
+  const fb = feedbackRegion({ label: "个人资料保存状态" });
   const inputs = {};
   let profileExtra = {};
 
+  // 命名实时预览的防抖句柄：以前每敲一个键就发一次请求（B6）
+  let namingTimer = 0;
+  let namingSeq = 0;
+
+  function scheduleNaming(delay = 300) {
+    window.clearTimeout(namingTimer);
+    namingTimer = window.setTimeout(() => refreshNaming(), delay);
+  }
+
   async function load() {
+    if (!formHost.dataset.loaded) {
+      const slot = h("div.ux-skel-slot", { "aria-hidden": "true" }, skeleton({ title: true, lines: 4 }));
+      slot.style.setProperty("--ux-skel-h", "288px");
+      formHost.replaceChildren(slot);
+    }
     try {
       const profile = await api.profile();
       profileExtra = profile.extra || {};
@@ -38,7 +55,7 @@ export function render() {
           const initial = scope === "extra" ? (profile.extra || {})[key] ?? "" : profile[key] ?? "";
           const field = input({ id: `pf-${key}`, value: initial, placeholder: hint || "" });
           inputs[key] = field;
-          field.addEventListener("input", () => queueMicrotask(refreshNaming));
+          field.addEventListener("input", () => scheduleNaming(300));
           return h(
             "label",
             { class: "field" },
@@ -132,12 +149,19 @@ export function render() {
   }
 
   function saveButton() {
-    const node = button({
+    const action = createAction({
       label: "保存",
       variant: "primary",
-      onClick: async () => {
-        node.disabled = true;
-        try {
+      onClick: () => saveProfile(),
+    });
+    return action.node;
+  }
+
+  async function saveProfile() {
+    fb.pending("正在保存资料", "只写本机数据库；姓名与联系方式不会因此离开本机。");
+    try {
+      {
+        {
           const patch = {};
           const extraPatch = { ...(profileExtra || {}) };
           for (const [key, , , scope] of FIELDS) {
@@ -154,16 +178,35 @@ export function render() {
           patch.extra = extraPatch;
           const saved = await api.saveProfile(patch);
           renderMeta(saved);
-          statusHost.prepend(callout({ tone: "success", title: "已保存", body: "文件名已同步更新。" }));
+          const stamp = new Date().toLocaleTimeString("zh-CN", { hour12: false });
+          fb.success({
+            title: `已保存 · ${stamp}`,
+            body: `姓名「${String(inputs.name_zh.value || "").trim() || "—"}」、校名「${String(inputs.school_zh.value || "").trim() || "—"}」已写入本机；导出文件名会立刻用新值。`,
+            announce: "资料已保存",
+          });
           await refreshNaming();
-        } catch (err) {
-          statusHost.replaceChildren(callout({ tone: "danger", title: "保存失败", body: errorText(err) }));
-        } finally {
-          node.disabled = false;
+          return saved;
         }
-      },
-    });
-    return node;
+      }
+    } catch (err) {
+      fb.error(err, {
+        retryable: true,
+        onRetry: () => saveProfile(),
+        hint: "表单里的内容没被清掉；改完上面提示的字段再点一次保存即可。",
+      });
+      // 把焦点送到第一个被服务端拒绝的字段（字段名从 details/errors 里取）
+      const firstBad = (err && err.details && (err.details.field || (Array.isArray(err.details.errors) && err.details.errors[0] && err.details.errors[0].field))) || "";
+      const target = firstBad ? inputs[firstBad] : null;
+      if (target && typeof target.focus === "function") {
+        try {
+          target.focus({ preventScroll: true });
+          target.scrollIntoView({ block: "center" });
+        } catch {
+          /* 忽略 */
+        }
+      }
+      throw err;
+    }
   }
 
   async function refreshNaming() {
@@ -211,6 +254,7 @@ export function render() {
     body: h(
       "div",
       { class: "stack" },
+      fb.node,
       statusHost,
       card({ title: "基本信息", body: formHost }),
       factsHost,

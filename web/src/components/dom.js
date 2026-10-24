@@ -209,3 +209,38 @@ export function trapFocus(container, { onEscape } = {}) {
   container.addEventListener("keydown", onKeydown);
   return () => container.removeEventListener("keydown", onKeydown);
 }
+
+/**
+ * 让弹层/抽屉支持 Esc 关闭 —— 不依赖焦点是否落在弹层内部。
+ *
+ * 为什么需要：trapFocus 的 Esc 只在该容器内收到 keydown 时生效；用户点了别处、
+ * 或焦点被移到容器外之后，Esc 就没反应了。这里在 document 上听，并且只关
+ * 最上面一层（避免一次 Esc 关掉两层）。
+ *
+ * 与 trapFocus 共存：trapFocus 会 preventDefault + stopPropagation，所以它已经
+ * 处理过的 Esc 不会再触发这里（事件到不了 document）。
+ *
+ * @param {HTMLElement} layer 弹层根节点（.modal-layer / .drawer-layer）
+ * @param {Function} onClose 关闭回调
+ * @returns {Function} 解绑函数
+ */
+export function escToClose(layer, onClose) {
+  if (!layer || typeof onClose !== "function") return () => {};
+  const stackSelector = ".modal-layer, .drawer-layer";
+
+  function onKeydown(event) {
+    if (!layer.isConnected) {
+      document.removeEventListener("keydown", onKeydown);
+      return;
+    }
+    if (event.key !== "Escape" || event.defaultPrevented) return;
+    const stack = Array.from(document.querySelectorAll(stackSelector));
+    if (stack.length && stack[stack.length - 1] !== layer) return;
+    if (!stack.length) return;
+    event.preventDefault();
+    onClose();
+  }
+
+  document.addEventListener("keydown", onKeydown);
+  return () => document.removeEventListener("keydown", onKeydown);
+}

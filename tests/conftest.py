@@ -151,7 +151,7 @@ def bootstrap(client, *, template_name: str = "中文模板", packages: bool = T
         "name_zh": "张三",
         "name_en": "SAN ZHANG",
         "school_zh": "示例大学",
-        "school_en": "Wuhan University",
+        "school_en": "Example University",
         "degree": "本科",
         "major": "管理科学（商业数据分析）",
         "grad_year": 2028,

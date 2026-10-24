@@ -63,7 +63,7 @@ Job（长任务） / LlmPreview / LlmCallLog / AppSetting / SchemaMigration（�
 | `name_zh` | TEXT | NOT NULL, len 1–40 | 中文姓名，如 `张三`；`{name}` 在 `lang=zh` 时取此值 |
 | `name_en` | TEXT | NULL, len 0–80 | 英文姓名，如 `SAN ZHANG`；`lang=en` 时取此值；缺失则 `{name}` 解析失败 |
 | `school_zh` | TEXT | NULL, len 0–80 | 如 `示例大学` |
-| `school_en` | TEXT | NULL, len 0–120 | 如 `Wuhan University` |
+| `school_en` | TEXT | NULL, len 0–120 | 如 `Example University` |
 | `school_tier` | TEXT | CHECK IN (`C9`,`985`,`211`,`双一流`,`普通本科`,`海外`,`其他`), NULL | **院校层次，一等列**（原藏在 `extra_json`，v1.6 升格）。用户可手填；空则 LLM 依校名推断并告警 `SCHOOL_TIER_INFERRED`。供 `jd/analyze` 的 `competitiveness.school_tier` 直接取用 。**「未识别 ≠ 普通本科」**：推断不出时写 `其他` 并置 `recognized=false`（API-CONTRACT §6.1「未识别语义」），`competitiveness` 不得据此给出「层次偏低」结论|
 | `degree` | TEXT | CHECK IN (`本科`,`硕士`,`博士`,`大专`,`其他`) | |
 | `major` | TEXT | NULL, len 0–80 | 如 `管理科学（商业数据分析）` |

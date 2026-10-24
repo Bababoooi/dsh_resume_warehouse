@@ -185,7 +185,7 @@ class EnglishBuildTest(T8Base):
         # 命名模板需要 {name}/{school}：先把档案填上（真实使用里用户在导入确认时就填了）
         self.client.put(
             "/api/v1/profile",
-            json={"name_zh": "张三", "name_en": "SAN ZHANG", "school_zh": "示例大学", "school_en": "Wuhan University"},
+            json={"name_zh": "张三", "name_en": "SAN ZHANG", "school_zh": "示例大学", "school_en": "Example University"},
         )
         import_id = self._import_zh()
         self._commit(import_id, also_create_packages=True)

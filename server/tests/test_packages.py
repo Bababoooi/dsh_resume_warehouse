@@ -1,6 +1,6 @@
 """t6 经历包（Package）：PKG-01..07 + 对话式打包 + 变体生成的 consent 前置。
 
-判据来源：docs/maintainers/REVIEW-CHECKLIST.md §1.3（PKG-01..07）。
+判据来源：docs/REVIEW-CHECKLIST.md §1.3（PKG-01..07）。
 所有用例都对着真 SQLite（``data/_tests/<tmp>/app.db``）与 Flask test client 跑，
 FTS 用 ``select count(*) from package_fts`` 反证「不是 LIKE 冒充」。
 """

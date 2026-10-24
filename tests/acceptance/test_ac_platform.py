@@ -566,7 +566,7 @@ def _priv_12(flow):
 @check("AC-PRIV-13")
 def _priv_13(flow):
     """配置助手脚本不回显 key 片段。"""
-    path = repo_root() / "scripts/set-api-key.command"
+    path = repo_root() / "设置API密钥.command"
     if not path.exists():
         pytest.skip("配置助手脚本不在仓库内")
     text = path.read_text(encoding="utf-8")

@@ -11,6 +11,7 @@ import { statusBar, sideNav, topBar, page } from "./components/layout.js";
 import { h, replace } from "./components/dom.js";
 import { callout, button } from "./components/primitives.js";
 import { icon } from "./components/icons.js";
+import { toast } from "./components/toast.js";
 
 const ROUTES = {
   workbench: { label: "工作台", crumb: "对话式录入工作台", desc: "把一段经历讲清楚，剩下的交给仓库" },
@@ -24,8 +25,8 @@ const ROUTES = {
 
 /* ---------------- 主题 ---------------- */
 const THEME_KEY = "rw-theme";
-const AI_LABELS = { ok: "DeepSeek 已就绪", warn: "模型未配置", bad: "调用失败", idle: "AI 未检查" };
-const FONT_LABELS = { ok: "中文字体可用", warn: "字体待确认", bad: "缺中文字体", idle: "字体未检查" };
+const AI_LABELS = { ok: "DeepSeek 已就绪", warn: "模型未配置", bad: "调用失败", idle: "AI 未检查", checking: "正在检查 AI…" };
+const FONT_LABELS = { ok: "中文字体可用", warn: "字体待确认", bad: "缺中文字体", idle: "字体未检查", checking: "正在检查字体…" };
 
 const states = () => {
   const s = { ai: "idle", font: "idle", lastExport: null, url: null };
@@ -73,10 +74,12 @@ function renderChrome() {
         label: AI_LABELS[appStatus.ai] || "AI 状态未知",
         title: "AI 仅在你确认后联网，发送字段逐项可见",
         onClick: () => navigate("settings"),
+        onRetry: () => probeStatus({ retry: true }),
       },
       font: {
         level: appStatus.font,
         label: FONT_LABELS[appStatus.font] || "字体状态未知",
+        onRetry: () => probeStatus({ retry: true }),
       },
       lastExport: appStatus.lastExport,
       theme: currentTheme(),
@@ -202,6 +205,8 @@ window.addEventListener("hashchange", () => {
 
 /* ---------------- 全局快捷键 ---------------- */
 document.addEventListener("keydown", (ev) => {
+  // 中文输入法组字期间的按键不是命令（Enter/⌘S 都不该触发提交）
+  if (ev.isComposing || ev.keyCode === 229) return;
   const meta = ev.metaKey || ev.ctrlKey;
   if (meta && ev.key.toLowerCase() === "k") {
     ev.preventDefault();
@@ -225,11 +230,25 @@ window.addEventListener("rw:status", (ev) => {
 renderChrome();
 
 /* 启动即探一次真实状态：状态条此前永远停在 idle，因为没有任何地方派发 rw:status。
-   两个端点都是本机自检（不发任何用户数据），失败也只影响一颗指示灯。 */
-async function probeStatus() {
+   两个端点都是本机自检（不发任何用户数据），失败也只影响一颗指示灯。
+   retry=true 用于用户点击状态条上的刷新：先置 checking 给即时反馈，失败再补一条可重试的提示。 */
+async function probeStatus({ retry = false } = {}) {
+  if (retry) {
+    window.dispatchEvent(new CustomEvent("rw:status", { detail: { ai: "checking", font: "checking" } }));
+  }
   const out = {};
+
+  // 本地服务可能在启动/重启：4 秒还没回就当失败，不然状态条会一直停在「未检查」
+  const signal = (() => {
+    try {
+      return typeof AbortSignal !== "undefined" && AbortSignal.timeout ? AbortSignal.timeout(4000) : undefined;
+    } catch {
+      return undefined;
+    }
+  })();
+
   try {
-    const resp = await fetch("/api/v1/llm/status");
+    const resp = await fetch("/api/v1/llm/status", signal ? { signal } : undefined);
     const body = await resp.json();
     const data = (body && body.data) || {};
     if (data.ready === true) out.ai = "ok";
@@ -239,7 +258,7 @@ async function probeStatus() {
     out.ai = "bad";
   }
   try {
-    const resp = await fetch("/api/v1/env");
+    const resp = await fetch("/api/v1/env", signal ? { signal } : undefined);
     const body = await resp.json();
     const fonts = (body && body.data && body.data.fonts) || {};
     const name = (fonts.primary && (fonts.primary.name || fonts.primary)) || "";
@@ -249,7 +268,26 @@ async function probeStatus() {
   } catch (_) {
     out.font = "bad";
   }
+
   window.dispatchEvent(new CustomEvent("rw:status", { detail: out }));
+
+  if (retry && out.ai === "bad" && out.font === "bad") {
+    toast({
+      tone: "warn",
+      title: "还是连不上本地服务",
+      message: "两个自检端点都没响应。如果刚重启过，等两秒再点状态条上的刷新。",
+      timeout: 6000,
+    });
+  } else if (retry && (out.ai === "bad" || out.font === "bad")) {
+    const failing = [out.ai === "bad" ? "AI 状态" : "", out.font === "bad" ? "中文字体" : ""].filter(Boolean).join("、");
+    toast({
+      tone: "warn",
+      title: `${failing}检查未通过`,
+      message: out.ai === "bad" ? "看看设置页里的服务商与模型；只想用本地能力可以先不管。" : "导出 PDF 会失败：装宋体或改用渲染引擎。",
+      timeout: 6000,
+    });
+  }
+  return out;
 }
 probeStatus();
 
@@ -279,6 +317,7 @@ mountPage(activeRoute);
 window.__rw = {
   navigate,
   refreshStatus: () => renderChrome(),
+  probeStatus: () => probeStatus({ retry: true }),
   icon,
 };
     

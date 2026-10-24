@@ -47,22 +47,38 @@ ROOT = Path(__file__).resolve().parents[2]
 # --------------------------------------------------------------------------- #
 def _seed_en_draft(gpa: str = "3.57/4.0") -> None:
     """插一条英文导入草稿（`GPA: 3.57/4.0`），让 `source_conflict.detect()` 有东西可比。"""
+    _seed_draft(lang="en", gpa=gpa)
+
+
+def _seed_zh_draft(gpa: str = "3.56/4") -> None:
+    """插一条中文导入草稿（`GPA：3.56/4`）。
+
+    `flow` 是 session 作用域：别的模块可能改掉/归档掉它那条中文导入草稿，
+    于是 `detect()` 只剩英文一侧 → 「没检测到 GPA 冲突」。用例要自给自足，
+    不能依赖前面没跑过谁。
+    """
+    _seed_draft(lang="zh", gpa=gpa)
+
+
+def _seed_draft(*, lang: str, gpa: str) -> None:
     from app import db as db_mod
 
     conn = db_mod.get_conn()
-    sha = hashlib.sha256(f"en-draft-{gpa}".encode()).hexdigest()
-    attachment_id = f"ac-en-draft-{uuid.uuid4().hex[:8]}"
+    sha = hashlib.sha256(f"{lang}-draft-{gpa}".encode()).hexdigest()
+    attachment_id = f"ac-{lang}-draft-{uuid.uuid4().hex[:8]}"
     now = db_mod.utcnow_iso()
+    heading = "EDUCATION" if lang == "en" else "教育背景"
+    fact = f"GPA: {gpa}" if lang == "en" else f"GPA：{gpa}"
     draft = {
-        "lang": "en",
+        "lang": lang,
         "blocks": [
             {"temp_id": "tb-header", "block_type": "header", "heading": "ZHANG SAN", "preview_text": "ZHANG SAN"},
             {
                 "temp_id": "tb-s1",
                 "block_type": "section",
-                "heading": "EDUCATION",
-                "preview_text": f"GPA: {gpa}",
-                "entry": {"facts": [f"GPA: {gpa}"], "bullets": []},
+                "heading": heading,
+                "preview_text": fact,
+                "entry": {"facts": [fact], "bullets": []},
             },
         ],
     }
@@ -70,13 +86,13 @@ def _seed_en_draft(gpa: str = "3.57/4.0") -> None:
         conn.execute(
             "INSERT INTO attachment (id, sha256, original_name, ext, mime, bytes, kind, privacy, created_at)"
             " VALUES (?,?,?,?,?,?,?,?,?)",
-            (attachment_id, sha, "ac-en-resume.txt", "txt", "text/plain", 128, "resume_source", "private", now),
+            (attachment_id, sha, f"ac-{lang}-resume.txt", "txt", "text/plain", 128, "resume_source", "private", now),
         )
         conn.execute(
             "INSERT INTO import_job (id, attachment_id, status, parser, draft_json, stats_json, warnings_json,"
             " created_at, updated_at) VALUES (?,?,?,?,?,?,?,?,?)",
             (
-                f"ac-en-job-{uuid.uuid4().hex[:8]}",
+                f"ac-{lang}-job-{uuid.uuid4().hex[:8]}",
                 attachment_id,
                 "committed",
                 "txt",
@@ -94,8 +110,10 @@ def _drop_en_drafts() -> None:
 
     conn = db_mod.get_conn()
     with db_mod.transaction(conn):
-        rows = conn.execute("SELECT attachment_id FROM import_job WHERE id LIKE 'ac-en-job-%'").fetchall()
-        conn.execute("DELETE FROM import_job WHERE id LIKE 'ac-en-job-%'")
+        rows = conn.execute(
+            "SELECT attachment_id FROM import_job WHERE id LIKE 'ac-en-job-%' OR id LIKE 'ac-zh-job-%'"
+        ).fetchall()
+        conn.execute("DELETE FROM import_job WHERE id LIKE 'ac-en-job-%' OR id LIKE 'ac-zh-job-%'")
         for row in rows:
             conn.execute("DELETE FROM attachment WHERE id = ?", (row["attachment_id"],))
 
@@ -121,17 +139,40 @@ RESOLVED_BY_USER = {
 }
 
 
-def _with_conflict(fn):
+ZH_GPA_LINE = "专业成绩：GPA 3.56/4 86.53/100 CET4：562 CET6：508"
+
+
+def _ensure_zh_gpa(client) -> list[str]:
+    """保证中文教育段里有 GPA 3.56/4（`flow` 是 session 作用域，别的用例可能改过它）。
+
+    返回**原始** lines，调用方负责还原。冲突检测要的是「中文有 3.56/4、英文草稿有 3.57/4.0」，
+    两侧都得现成，缺一侧就等于「没有冲突可测」。
+    """
+    original = list(client.get("/api/v1/profile/education-facts").get_json()["data"]["lines"])
+    if any("3.56/4" in line for line in original):
+        return original
+    client.put("/api/v1/profile/education-facts", json={"lines": [*original, ZH_GPA_LINE]})
+    return original
+
+
+def _restore_lines(client, lines: list[str]) -> None:
+    client.put("/api/v1/profile/education-facts", json={"lines": lines})
+
+
+def _with_conflict(fn, client):
     """给需要「中英 GPA 冲突」的用例装上草稿，跑完拆掉并还原资料里的决议。"""
     from app.repos import ProfileRepo
 
     repo = ProfileRepo()
     original_extra = dict((repo.get() or {}).get("extra") or {})
+    original_lines = _ensure_zh_gpa(client)
+    _seed_zh_draft()
     _seed_en_draft()
     try:
         fn()
     finally:
         _drop_en_drafts()
+        _restore_lines(client, original_lines)
         repo.upsert({"extra": original_extra})
 
 
@@ -195,7 +236,7 @@ def test_ac_conflict_02_resolved_is_info_and_value_unchanged(flow):
         got = [w for w in (job.get("result_json") or {}).get("warnings") or [] if w.get("code") == "SOURCE_CONFLICT"]
         assert any(w["severity"] == "info" and w["details"].get("value_used") == "3.56/4" for w in got), got
 
-    _with_conflict(body)
+    _with_conflict(body, flow["client"])
 
 
 @check("AC-CONFLICT-02")
@@ -217,7 +258,7 @@ def test_ac_conflict_02_without_resolution_falls_back_to_warn(flow):
         got = [w for w in (job.get("result_json") or {}).get("warnings") or [] if w.get("code") == "SOURCE_CONFLICT"]
         assert got and all(w["severity"] == "warn" for w in got), got
 
-    _with_conflict(body)
+    _with_conflict(body, flow["client"])
 
 
 @check("AC-CONFLICT-02")
@@ -239,7 +280,7 @@ def test_ac_conflict_02_non_user_decision_is_not_honoured(flow):
             assert all(w["severity"] == "warn" for w in warnings), (decided_by, warnings)
             assert all("resolved" not in w["details"] for w in warnings), (decided_by, warnings)
 
-    _with_conflict(body)
+    _with_conflict(body, flow["client"])
 
 
 # --------------------------------------------------------------------------- #
@@ -360,7 +401,7 @@ print(json.dumps({"status": r.status_code, "body": r.get_json(), "blocks": count
 # --------------------------------------------------------------------------- #
 @check("AC-PROF-02")
 def test_ac_prof_02_available_note_reaches_both_languages(flow):
-    """改 `available_note` → 中英两份 PDF 的页眉第三行都跟着变。"""
+    """改 `available_note` → 中文版跟着变；英文版只在有 en 表述时显示，缺了就省略（不得印中文）。"""
     client = flow["client"]
     marker = "2027年3月中旬"
 
@@ -368,7 +409,10 @@ def test_ac_prof_02_available_note_reaches_both_languages(flow):
     zh_text = _export_text(flow, flow["build_id"])
     en_text = _export_text(flow, flow["build_id_en"])
     assert marker in zh_text, zh_text[:400]
-    assert marker in en_text, "英文版没写英文表述时必须回退中文真值，而不是留空"
+    assert marker not in en_text, (
+        "英文版缺 en 表述时不得回退中文（会把「2027年3月中旬」印进英文简历）；应省略该行并发 "
+        "PROFILE_FIELD_MISSING{reason=avoid_chinese_in_english_export}"
+    )
 
     client.put("/api/v1/profile", json={"available_note": marker, "extra": {"available_note_en": "mid-March 2027"}})
     en_text = _export_text(flow, flow["build_id_en"])

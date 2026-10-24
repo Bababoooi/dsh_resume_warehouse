@@ -12,7 +12,7 @@
  *  7. 不显示 API Key 片段、不显示完整 payload（折进 <details>，且由后端脱敏后给出）。
  */
 
-import { h, cx, trapFocus } from "./dom.js";
+import { h, cx, trapFocus, escToClose } from "./dom.js";
 import { icon } from "./icons.js";
 import { badge, button, callout, kv } from "./primitives.js";
 
@@ -386,6 +386,8 @@ export function consentModal(p = {}) {
     dialog.setAttribute("tabindex", "-1");
     dialog.focus();
     trapFocus(dialog, { onEscape: p.onCancel });
+    // 焦点若被用户点到弹层外（例如误点滚动条），trapFocus 收不到 Esc；这一层兜底
+    escToClose(layer, p.onCancel);
     layer._dialog = dialog;
   });
 

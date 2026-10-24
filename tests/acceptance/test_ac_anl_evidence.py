@@ -166,7 +166,18 @@ def validate_evidence(requirement: dict, corpus: dict[str, str], skills: list[st
                 str(profile.get(key) or "") for key in ("degree", "major")
             )
         if len(quote) < 8:
-            problems.append(f"引文太短（{len(quote)} 字）：{quote!r}")
+            # 例外（§6.2.4）：档案字段本身可能就是短值（major="统计学"、grad_year=2028、
+            # school_tier="985"）。这类值「原样引用」是可核对的，不该因为短就判不可回溯；
+            # 但必须真的是该字段的值，不能拿任意 3 个字充数。
+            field_name = item.get("field")
+            short_field_ok = (
+                source == "profile"
+                and bool(field_name)
+                and quote == str(profile.get(str(field_name)) or "").strip()
+                and bool(quote)
+            )
+            if not short_field_ok:
+                problems.append(f"引文太短（{len(quote)} 字）：{quote!r}")
         elif quote not in blob:
             problems.append(f"引文在来源里找不到：{quote!r}")
     return problems

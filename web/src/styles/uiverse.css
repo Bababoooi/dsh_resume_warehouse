@@ -1,0 +1,666 @@
+/* ============================================================================
+   uiverse.css — 交互反馈层（v1.1 · 2026-10-24）
+   来源：uiverse 上 8 个组件的 8 个原始页面（协议前缀省略；选型与改造说明见 docs/UI-REFRESH.md）
+     · 按钮        uiverse.io/iamriishav/old-liger-56      （minimal / hover / shadow）
+     · 按压物理    uiverse.io/00Kubi/wise-catfish-3        （press）
+     · 下划线输入  uiverse.io/Satwinder04/quick-cheetah-45 （minimal / underline）
+     · 开关        uiverse.io/KareemTolan/tasty-snail-21   （grey / round / minimal）
+     · 复选框      uiverse.io/uiverse-astronaut/itchy-fireant-31（morph + tick 两段式）
+     · 行内 pending uiverse.io/uiverse-astronaut/ordinary-bobcat-90（spark loader）
+     · 整页 loader uiverse.io/elijahgummer/sharp-squid-77  （rotating star）
+     · 确认 toast  uiverse.io/uiverse-astronaut/great-turtle-50（circle check + hairline）
+
+   加载位置：web/index.html，紧跟 components.css、在 print.css 之前：
+     <link rel="stylesheet" href="./src/styles/uiverse.css" />
+
+   ── 挂载点（与已实装的 JS 逐字对齐，命名来自代码，不是新造的）─────────────
+     .ui-btn[data-phase="idle|pending|success|error"]   ← components/feedback.js createAction()
+     .ui-btn.is-pending / [aria-busy="true"]            ← createAction() 的视觉镜像
+     .ui-action__spin > .ui-spinner                     ← createAction() 的 14px 预留槽位
+     [data-region="feedback"]                            ← feedback.js feedbackRegion()
+     [data-role="job-progress"][data-state="running|done|failed"] ← progress.js jobProgress()
+     .toast[data-tone="info|success|warn|danger"]       ← components/toast.js toast()
+     .ui-spinner（全局）                                 ← primitives.js spinner()
+     .ux-* 前缀 = 本文件新增、页面可选接入的交互层（不与既有类冲突）
+
+   ── 四条不可谈判的不变量 ────────────────────────────────────────────────────
+   1. 只写样式，不含业务逻辑；本文件不对「A4 纸张及其容器」的任何一个类发
+      规则（纸张相关的选择器一个都没有），也不含打印分页声明 —— 因此 A4 导出
+      预览与照片几何（52pt 方块、距顶 8.3、距右 15.62）零影响。toast 的打印
+      隐藏已由 print.css 负责。
+   2. 零外部资源：不引任何样式表、不写任何资源引用函数、不连 CDN、不加载
+      图标字体。所有图形用 border / clip-path / gradient 现画。
+   3. 零字面色值：颜色、间距、圆角、时长全部取自 tokens.css 的变量。
+      tokens 用 light-dark() 成对声明，因此深浅两套主题自动成立，
+      本文件不需要任何 [data-theme] 分支。
+   4. 命名与覆盖纪律：
+      · .ux-*   = 新增交互层（页面可自由使用，不与既有类冲突）；
+      · .ui-*   = 只在「状态选择器」上扩展（[data-phase] / [data-state] /
+                  :active / :focus-visible / :hover），不改基础几何与默认外观，
+                  所以未接线的旧页面看起来完全不变。
+   全文零优先级强制声明（预算 3，实际 0）。
+   ========================================================================== */
+
+/* ============================================================================
+   0. 设计桥：把 tokens 收成一层交互语义变量
+   ========================================================================== */
+:root {
+  /* 按压位移：1px 就够，超过 2px 会震 */
+  --ux-press-y: 1px;
+  /* 点击手感时长（比 --dur-1 略快，按下去立刻有回音） */
+  --ux-dur-tap: 100ms;
+  /* 失败回滚的闪红时长，与 createAction 的 holdMs=1200ms 对齐 */
+  --ux-dur-flash: 1200ms;
+  /* 行内 pending 星标尺寸（与 createAction 预留的 14px 槽位一致） */
+  --ux-spin-size: 14px;
+  /* 骨架槽最小高度，页面用内联 style 覆盖成真实内容高度（零跳动关键） */
+  --ux-skel-h: 96px;
+}
+
+/* ============================================================================
+   1. 按钮：柔和阴影的悬停态 + 1px 下沉的按压态 + data-phase 四态
+   （改造自 minimal/hover 白底按钮 → 去掉白色硬边与蓝色，阴影降到 --sh-1；
+     3D 抬升改成「按下沉 1px + 阴影归零」。状态属性沿用 feedback.js 的
+     data-phase，同时兼容旧的 [data-state] 与 .is-loading 写法）
+   ========================================================================== */
+
+/* 1.1 触点反馈 —— 纯 CSS，不需要任何指针事件监听 */
+.ui-btn {
+  transition:
+    background var(--dur-1) var(--ease),
+    border-color var(--dur-1) var(--ease),
+    color var(--dur-1) var(--ease),
+    box-shadow var(--dur-1) var(--ease),
+    transform var(--ux-dur-tap) var(--ease);
+}
+
+/* 悬停只抬阴影，不改底色（底色归既有变体管，避免二次覆盖） */
+.ui-btn--primary:hover,
+.ui-btn--secondary:hover,
+.ui-btn--danger:hover {
+  box-shadow: var(--sh-1);
+}
+
+.ui-btn:not(:disabled):not([aria-disabled="true"]):not(:is([data-phase="pending"], [data-state="pending"])):active {
+  transform: translateY(var(--ux-press-y));
+  box-shadow: none;
+}
+
+/* 1.2 pending —— 关键修正：不把按钮压到 disabled 的 0.45 透明度。
+   createAction() 在 pending 时设 disabled=true（挡双击、挡 Tab 走开），
+   但视觉上必须仍然「活着」：星标 + 文案「处理中…」都要看得清。 */
+.ui-btn:is([data-phase="pending"], [data-state="pending"], .is-pending) {
+  pointer-events: none;
+  cursor: progress;
+}
+
+.ui-btn:is([data-phase="pending"], [data-state="pending"], .is-pending):disabled,
+.ui-btn:is([data-phase="pending"], [data-state="pending"], .is-pending)[aria-disabled="true"] {
+  opacity: 1;
+  cursor: progress;
+}
+
+/* 老写法（.is-loading 把文字藏起来只留中心转圈）继续支持 */
+.ui-btn.is-loading {
+  position: relative;
+  color: transparent;
+  pointer-events: none;
+  cursor: progress;
+}
+
+.ui-btn.is-loading .ui-btn__icon,
+.ui-btn.is-loading .ui-btn__kbd {
+  opacity: 0;
+}
+
+.ui-btn.is-loading .ui-spinner {
+  position: absolute;
+  inset: 0;
+  margin: auto;
+}
+
+/* 1.3 success —— 只着色边框/文字，不换整块底色（白底暗底都不炸） */
+.ui-btn[data-phase="success"],
+.ui-btn[data-state="success"] {
+  border-color: var(--c-success-border);
+  color: var(--c-success);
+  background: var(--c-success-soft);
+}
+
+/* 1.4 error —— 红边 + 一次 2px 横向抖动（不位移布局） */
+.ui-btn[data-phase="error"],
+.ui-btn[data-state="error"] {
+  border-color: var(--c-danger-border);
+  color: var(--c-danger);
+  background: var(--c-danger-soft);
+  animation: ux-shake var(--dur-3) var(--ease) 1;
+}
+
+@keyframes ux-shake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  20% {
+    transform: translateX(-2px);
+  }
+  40% {
+    transform: translateX(2px);
+  }
+  60% {
+    transform: translateX(-2px);
+  }
+  80% {
+    transform: translateX(2px);
+  }
+}
+
+/* 1.5 结构性禁用（缺字体、前置条件不满足）保留既有淡化，并禁止浮起误导 */
+.ui-btn:disabled:hover,
+.ui-btn[aria-disabled="true"]:hover {
+  box-shadow: none;
+}
+
+/* ============================================================================
+   2. pending 指示器：把圆环换成四角星（clip-path 现画，零图片零请求）
+   （改造自 spark loader：parchment↔ember 的双色循环降级为
+     「主色 + opacity 呼吸」，低饱和下不抢视线）
+   直接覆盖 .ui-spinner，因此 createAction / jobProgress / loadingText /
+   toast 里的所有转圈一次性统一成星标，不需要改任何 JS。
+   ========================================================================== */
+.ui-spinner {
+  border: 0;
+  border-radius: 0;
+  background: currentColor;
+  clip-path: polygon(
+    50% 0%,
+    61% 39%,
+    100% 50%,
+    61% 61%,
+    50% 100%,
+    39% 61%,
+    0% 50%,
+    39% 39%
+  );
+  animation:
+    ux-spin 1.1s linear infinite,
+    ux-spin-breathe 2.2s var(--ease) infinite;
+}
+
+@keyframes ux-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes ux-spin-breathe {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.55;
+  }
+}
+
+/* 逃生舱：某些位置需要传统圆环（例如深底上的极细指示）时加这个修饰类 */
+.ui-spinner--ring {
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: var(--r-pill);
+  background: transparent;
+  clip-path: none;
+  animation: spin 0.7s linear infinite;
+}
+
+/* 2.2 没有 .ui-spinner 可用时的星标写法（静态 chip / 文本旁） */
+.ux-spin {
+  display: inline-block;
+  width: var(--ux-spin-size);
+  height: var(--ux-spin-size);
+  flex: 0 0 auto;
+  vertical-align: -2px;
+  background: var(--c-primary);
+  clip-path: polygon(
+    50% 0%,
+    61% 39%,
+    100% 50%,
+    61% 61%,
+    50% 100%,
+    39% 61%,
+    0% 50%,
+    39% 39%
+  );
+  animation:
+    ux-spin 1.1s linear infinite,
+    ux-spin-breathe 2.2s var(--ease) infinite;
+}
+
+.ux-spin--sm {
+  --ux-spin-size: 11px;
+}
+
+.ux-spin--lg {
+  --ux-spin-size: 22px;
+}
+
+.ux-spin--muted {
+  background: var(--c-text-3);
+}
+
+/* 星标 + 说明文字（状态永远「图形 + 文字」，颜色不单独表意） */
+.ux-pending {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-3);
+  color: var(--c-text-2);
+  font-size: var(--fs-12);
+  line-height: var(--lh-snug);
+}
+
+.ux-pending__label {
+  color: var(--c-text-3);
+  font-size: var(--fs-11);
+  letter-spacing: 0.04em;
+}
+
+/* ============================================================================
+   3. 输入：焦点态画一条 2px 内嵌下划线（inset 阴影，不占布局、不撑高）
+   （改造自 minimal underline input；保留原有 1px 边框，只叠加焦点线，
+     未聚焦时一个像素都不变）
+   ========================================================================== */
+.ui-input:focus-visible,
+.ui-textarea:focus-visible,
+.ui-select:focus-visible {
+  box-shadow: var(--ring), inset 0 -2px 0 var(--c-primary);
+}
+
+.ui-input[aria-invalid="true"]:focus-visible,
+.ui-textarea[aria-invalid="true"]:focus-visible,
+.ui-select[aria-invalid="true"]:focus-visible {
+  box-shadow: 0 0 0 3px var(--c-danger-soft), inset 0 -2px 0 var(--c-danger);
+}
+
+/* 只读字段不做 hover 反馈，避免暗示可编辑 */
+.ui-input[readonly]:hover,
+.ui-textarea[readonly]:hover {
+  border-color: var(--c-border-input);
+}
+
+/* 文件选择：聚焦与拖拽同一套视觉（上传必须键盘可达） */
+.ui-file:focus-within {
+  border-color: var(--c-primary);
+  box-shadow: var(--ring);
+}
+
+/* ============================================================================
+   4. 开关：灰轨 + 圆钮，按下时拇指轻微拉长（把「正在按」和「已切换」分开）
+   （改造自 grey/round/minimal switch；轨色直接映射 tokens 灰阶）
+   ========================================================================== */
+.ui-switch__track {
+  transition: background-color var(--dur-2) var(--ease);
+}
+
+.ui-switch__thumb {
+  transition:
+    transform var(--dur-2) var(--ease),
+    width var(--dur-2) var(--ease);
+}
+
+.ui-switch:not([aria-disabled="true"]):active .ui-switch__thumb {
+  width: 18px;
+}
+
+.ui-switch[aria-checked="true"]:active .ui-switch__thumb {
+  width: 18px;
+  transform: translateX(12px);
+}
+
+.ui-switch:not([aria-disabled="true"]) {
+  cursor: pointer;
+}
+
+.ui-switch:not([aria-disabled="true"]):hover .ui-switch__track {
+  background: var(--c-text-3);
+}
+
+.ui-switch[aria-checked="true"]:not([aria-disabled="true"]):hover .ui-switch__track {
+  background: var(--c-primary-solid-hover);
+}
+
+/* ============================================================================
+   5. 复选框：两段式确认（先填底色，60ms 后勾才弹出来）
+   （改造自 morph checkbox 的 fill → tick 节奏。刻意保留方形：
+     .ui-check 同时承载 radio，圆形语义会撞车）
+   ========================================================================== */
+.ui-check input {
+  transition:
+    background-color var(--ux-dur-tap) var(--ease),
+    border-color var(--ux-dur-tap) var(--ease),
+    transform var(--ux-dur-tap) var(--ease);
+}
+
+.ui-check input:not(:disabled):active {
+  transform: scale(0.9);
+}
+
+.ui-check input:checked::after {
+  animation: ux-tick-in 160ms var(--ease) 60ms both;
+}
+
+@keyframes ux-tick-in {
+  0% {
+    transform: rotate(-45deg) translateY(-1px) scale(0.35);
+    opacity: 0;
+  }
+  60% {
+    opacity: 1;
+  }
+  100% {
+    transform: rotate(-45deg) translateY(-1px) scale(1);
+    opacity: 1;
+  }
+}
+
+.ui-check input:disabled {
+  cursor: not-allowed;
+  background: var(--c-surface-3);
+  border-color: var(--c-border);
+}
+
+.ui-check:has(input:disabled) {
+  cursor: not-allowed;
+  color: var(--c-text-3);
+}
+
+/* ============================================================================
+   6. 反馈区：feedbackRegion() 的挂载点 [data-region="feedback"]
+   该容器由 JS 用 clear()+append 换内容（一次动作只显示一块），所以这里只做三件事：
+     · 空着时彻底不占高度（不留一条 stack 缝）；
+     · 新内容入场 180ms 淡入下移 3px —— 让「反馈出现了」可被眼睛捕捉，
+       transform 不参与布局，宽高不变；
+     · pending 期（aria-busy=true）用虚线段提示「还没有结果」。
+   若要四态之间零跳动，见 docs/UI-REFRESH.md 附录 A（预渲染四块 + data-phase）。
+   ========================================================================== */
+[data-region="feedback"]:empty {
+  display: none;
+}
+
+[data-region="feedback"] > .ui-callout {
+  animation: ux-feedback-in var(--dur-2) var(--ease) both;
+}
+
+@keyframes ux-feedback-in {
+  from {
+    opacity: 0;
+    transform: translateY(-3px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+[data-region="feedback"][aria-busy="true"] > .ui-callout {
+  border-style: dashed;
+}
+
+/* 反馈区里的动作链接/按钮要能被键盘看见 */
+[data-region="feedback"] :is(a, button):focus-visible {
+  outline: none;
+  box-shadow: var(--ring);
+  border-radius: var(--r-xs);
+}
+
+/* ============================================================================
+   7. 骨架：把流光换成 token 色（原 components.css 用 rgba 字面值 + light-dark 补丁，
+      这里直接用 --c-surface-hover，暗色自动正确）；另给安静版与零跳动槽位
+   ========================================================================== */
+.ui-skel::after {
+  background: linear-gradient(90deg, transparent, var(--c-surface-hover), transparent);
+}
+
+/* 安静版：不扫光，只呼吸。用于「已知会很快返回」的窄条 */
+.ux-skel-pulse {
+  animation: ux-skel-pulse 1.6s var(--ease) infinite;
+}
+
+@keyframes ux-skel-pulse {
+  50% {
+    opacity: 0.5;
+  }
+}
+
+/* 零跳动槽位：--ux-skel-h 设成真实内容高度（页面内联 style 覆盖），
+   骨架 → 真数据切换时容器高度不变 */
+.ux-skel-slot {
+  display: grid;
+  min-height: var(--ux-skel-h);
+}
+
+/* 列表骨架行距与真实列表一致（--sp-4），避免行数差引起二次跳动 */
+.ux-skel-rows {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+}
+
+/* ============================================================================
+   8. 乐观更新与回滚（配合 feedback.js optimistic({apply,commit,revert,onError})）
+   页面在 apply 时给行加 .is-optimistic，revert 时换成 data-state="error"，
+   1.2s 后由页面清掉。
+   ========================================================================== */
+.ux-row.is-optimistic,
+.ux-row[data-state="optimistic"] {
+  opacity: 0.65;
+  outline: 1px dashed var(--c-border-strong);
+  outline-offset: -1px;
+  transition: opacity var(--dur-2) var(--ease);
+}
+
+.ux-row[data-state="error"] {
+  opacity: 1;
+  outline: none;
+  animation: ux-rollback var(--ux-dur-flash) var(--ease) both;
+}
+
+@keyframes ux-rollback {
+  0%,
+  45% {
+    background-color: var(--c-danger-soft);
+  }
+  100% {
+    background-color: transparent;
+  }
+}
+
+/* ============================================================================
+   9. Toast：发丝边框 + 柔和阴影 + 圆形 check 领起 + ghost 关闭字形
+   （改造自 confirmation toast。墨色面板换成 --c-surface；
+     「圆勾」落在既有 .toast__icon 上，不改 JS 生成的 DOM 结构）
+   ========================================================================== */
+.toast {
+  box-shadow: var(--sh-3), inset 0 1px 0 var(--c-surface-2);
+  /* tone 用左侧 3px 竖条表达（颜色不单独表意：图标与标题文案仍在） */
+  border-left-width: 3px;
+}
+
+.toast[data-tone="success"] {
+  border-left-color: var(--c-success);
+}
+
+.toast[data-tone="warn"] {
+  border-left-color: var(--c-warn);
+}
+
+.toast[data-tone="danger"] {
+  border-left-color: var(--c-danger);
+}
+
+.toast[data-tone="info"] {
+  border-left-color: var(--c-border-strong);
+}
+
+/* 兼容旧任务卡（components/job-toast.js 没有 data-tone，只有 is-<status>） */
+.toast.is-succeeded {
+  border-left-color: var(--c-success);
+}
+
+.toast.is-interrupted {
+  border-left-color: var(--c-warn);
+}
+
+.toast.is-failed {
+  border-left-color: var(--c-danger);
+}
+
+/* 成功态：把 16px 图标包进 22px 圆里（勾形沿用 icons.js 的 check-circle） */
+.toast.is-succeeded .toast__icon,
+.toast[data-tone="success"] .toast__icon {
+  width: 22px;
+  height: 22px;
+  display: grid;
+  place-items: center;
+  border-radius: var(--r-pill);
+  border: 1px solid var(--c-success-border);
+  background: var(--c-success-soft);
+  color: var(--c-success);
+}
+
+.toast.is-failed .toast__icon,
+.toast[data-tone="danger"] .toast__icon {
+  width: 22px;
+  height: 22px;
+  display: grid;
+  place-items: center;
+  border-radius: var(--r-pill);
+  border: 1px solid var(--c-danger-border);
+  background: var(--c-danger-soft);
+  color: var(--c-danger);
+}
+
+/* ghost 关闭字形：无边框、无底色，只留字形；hover 才出淡底 */
+.toast__head > .ui-btn {
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border-radius: var(--r-xs);
+  color: var(--c-text-3);
+  text-decoration: none;
+}
+
+.toast__head > .ui-btn:hover {
+  color: var(--c-text);
+  background: var(--c-surface-hover);
+}
+
+.toast__head > .ui-btn:focus-visible {
+  outline: none;
+  box-shadow: var(--ring);
+}
+
+/* 离场：toast.js 会加 .is-leaving 并写内联 transition；
+   这里补一条纯 CSS 兜底（没有内联时也能淡出） */
+.toast.is-leaving {
+  opacity: 0;
+  transform: translateY(4px);
+  pointer-events: none;
+  transition:
+    opacity var(--dur-2) var(--ease),
+    transform var(--dur-2) var(--ease);
+}
+
+/* 任务卡里的「进行中」用星标而不是圆环 */
+.toast .ui-spinner {
+  margin-top: 2px;
+}
+
+/* ============================================================================
+   10. 长任务进度：progress.js jobProgress() 的 [data-role="job-progress"]
+   ========================================================================== */
+[data-role="job-progress"] .ui-spinner {
+  color: var(--c-primary);
+}
+
+[data-role="job-progress"][data-state="done"] .ui-progress__bar {
+  background: var(--c-success);
+}
+
+[data-role="job-progress"][data-state="failed"] .ui-progress__bar {
+  background: var(--c-danger);
+}
+
+[data-role="job-progress"][data-state="failed"] .ui-progress__track {
+  background: var(--c-danger-soft);
+}
+
+/* ============================================================================
+   11. 忙碌面：防重复提交的样式兜底层
+   （JS 侧仍必须 disabled/守卫；CSS 只兜「回车提交」与「点第二个按钮」）
+   ========================================================================== */
+.ux-busy[aria-busy="true"] {
+  cursor: progress;
+}
+
+.ux-busy[aria-busy="true"] :is(.ui-btn, .ui-input, .ui-textarea, .ui-select, .ui-check, .ui-switch, .ui-file) {
+  pointer-events: none;
+}
+
+.ux-busy[aria-busy="true"] :is(.ui-input, .ui-textarea, .ui-select) {
+  opacity: 0.7;
+}
+
+/* ============================================================================
+   12. 键盘：新增可交互元素的焦点环
+   （.ui-btn / .ui-check / .ui-switch 已有环，不重复写）
+   ========================================================================== */
+[data-region="feedback"] .ui-btn:focus-visible,
+.toast :is(.ui-btn, a):focus-visible,
+.ui-file:focus-visible {
+  outline: none;
+  box-shadow: var(--ring);
+}
+
+/* ============================================================================
+   13. 动效降级：base.css 已把动效时长压到 0.01ms，这里再保证「不位移」
+   （降级后：星标停转、勾直接出现、Toast 直接消失、按压不下沉、拇指不拉长）
+   ========================================================================== */
+@media (prefers-reduced-motion: reduce) {
+  /* 必须与第 1 节完全相同的选择器，否则优先级输给按压规则 */
+  .ui-btn:not(:disabled):not([aria-disabled="true"]):not(:is([data-phase="pending"], [data-state="pending"])):active {
+    transform: none;
+    box-shadow: none;
+  }
+
+  .ui-check input:not(:disabled):active {
+    transform: none;
+  }
+
+  .ui-check input:checked::after {
+    animation: none;
+  }
+
+  .ui-switch:active .ui-switch__thumb {
+    width: 16px;
+  }
+
+  .ui-switch[aria-checked="true"]:active .ui-switch__thumb {
+    width: 16px;
+    transform: translateX(14px);
+  }
+
+  .ui-spinner,
+  .ux-spin,
+  .ux-skel-pulse,
+  [data-region="feedback"] > .ui-callout,
+  .ui-btn[data-phase="error"],
+  .ui-btn[data-state="error"],
+  .ux-row[data-state="error"] {
+    animation: none;
+  }
+
+  .toast.is-leaving {
+    transition: none;
+    opacity: 0;
+  }
+}

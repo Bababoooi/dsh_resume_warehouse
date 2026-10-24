@@ -3,7 +3,7 @@
  * 与 layout.css 的结构一一对应；index.html 里是同一套静态标记。
  */
 
-import { h, cx } from "./dom.js";
+import { h, cx, escToClose } from "./dom.js";
 import { icon } from "./icons.js";
 import { iconButton, statusDot } from "./primitives.js";
 
@@ -48,6 +48,20 @@ export function statusBar(p = {}) {
       )
     : h("span", { class: "status-item", title: ai.title }, h("i", { class: `status-dot status-dot--${ai.level}` }), ai.label);
 
+  // 「没就绪」时给一颗可点的刷新：状态是启动时探的，服务可能刚起来。
+  // 只在非 ok 时出现，避免正常状态下多一个噪音按钮。
+  const retryNode = (conf, label) =>
+    typeof conf.onRetry === "function" && conf.level !== "ok"
+      ? iconButton({ icon: "refresh", label, size: "sm", variant: "quiet", onClick: conf.onRetry })
+      : null;
+
+  const fontNode = h(
+    "span",
+    { class: "status-item", title: font.title || "中文 PDF 字体检测结果" },
+    h("i", { class: `status-dot status-dot--${font.level}` }),
+    font.label,
+  );
+
   const themeLabel = p.theme === "dark" ? "深色" : p.theme === "light" ? "浅色" : "跟随系统";
 
   return h(
@@ -62,9 +76,14 @@ export function statusBar(p = {}) {
       h("span", { class: "small" }, "本地"),
     ),
     h("i", { class: "status-sep", "aria-hidden": "true" }),
-    h("span", { class: "status-item", title: "AI 仅在你确认后联网，发送字段逐项可见" }, aiNode),
+    h(
+      "span",
+      { class: "status-item", title: "AI 仅在你确认后联网，发送字段逐项可见" },
+      aiNode,
+      retryNode(ai, ai.level === "checking" ? "正在检查 AI 状态…" : "重新检查 AI 状态"),
+    ),
     h("i", { class: "status-sep", "aria-hidden": "true" }),
-    h("span", { class: "status-item", title: font.title || "中文 PDF 字体检测结果" }, h("i", { class: `status-dot status-dot--${font.level}` }), font.label),
+    h("span", { class: "status-item" }, fontNode, retryNode(font, font.level === "checking" ? "正在检查中文字体…" : "重新检查中文字体")),
     h(
       "span",
       { class: "app__statusbar__right" },
@@ -228,7 +247,7 @@ export function appShell(p = {}) {
  * @param {{title:string, body:Node, footer?:Node, onClose?:Function, meta?:Node[], wide?:boolean}} p
  */
 export function drawer(p = {}) {
-  return h(
+  const layer = h(
     "div",
     { class: "drawer-layer" },
     h("div", { class: "drawer-layer__scrim", onClick: p.onClose, "aria-hidden": "true" }),
@@ -246,4 +265,8 @@ export function drawer(p = {}) {
       p.footer ? h("div", { class: "drawer__foot" }, p.footer) : null,
     ),
   );
+
+  // Esc 关闭（不依赖焦点位置；只关最上面一层）
+  if (typeof p.onClose === "function") escToClose(layer, p.onClose);
+  return layer;
 }

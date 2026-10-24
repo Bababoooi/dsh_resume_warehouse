@@ -10,9 +10,9 @@
 from __future__ import annotations
 
 import json
+import sys
 import re
 import subprocess
-import sys
 from pathlib import Path
 
 import pytest
@@ -104,7 +104,7 @@ def test_export_english_version_has_english_frame(client, data_dir):
     client.put(f"/api/v1/builds/{build_id}/selections", json={"items": selections})
     result = _export(client, build_id, lang="en")
     artifact = result["artifacts"][0]
-    assert artifact["filename"] == "Data-Analyst-Intern-SAN-ZHANG-Wuhan-University.pdf", artifact["filename"]
+    assert artifact["filename"] == "Data-Analyst-Intern-XUDONG-ZHONG-Wuhan-University.pdf", artifact["filename"]
     from pypdf import PdfReader
 
     text = "\n".join(page.extract_text() or "" for page in PdfReader(str(data_dir / "exports" / artifact["filename"])).pages)
@@ -233,9 +233,6 @@ def test_frontend_has_no_external_resources():
 
 
 def test_only_two_adapter_modules_can_touch_network():
-    # 用当前解释器而不是 .venv/bin/python：后者只在本机装了 venv 时存在，
-    # 新克隆的仓库里没有 `.venv/`，硬编码路径会让这条判据在别人机器上直接报错，
-    # 而不是「判出真实问题」。
     result = subprocess.run(
         [sys.executable, "scripts/check_egress.py"],
         cwd=str(PROJECT_ROOT),
@@ -257,16 +254,6 @@ def test_no_plaintext_api_key_and_sensitive_paths_ignored():
         for line in env_file.read_text(encoding="utf-8").splitlines():
             if line.startswith("LLM_API_KEY="):
                 key = line.split("=", 1)[1].strip()
-    # 从 tarball / zip 解出来的目录没有 .git，git 相关判据无从谈起——跳过而不是
-    # 判红。判红会让人以为「仓库卫生有问题」，实际只是没有版本库。
-    inside = subprocess.run(
-        ["git", "rev-parse", "--is-inside-work-tree"],
-        cwd=str(PROJECT_ROOT),
-        capture_output=True,
-        text=True,
-    )
-    if inside.returncode != 0 or inside.stdout.strip() != "true":
-        pytest.skip("不在 git 工作区内（如 tarball 解包），跳过版本库卫生判据")
     tracked = subprocess.run(
         ["git", "ls-files"], cwd=str(PROJECT_ROOT), capture_output=True, text=True
     ).stdout.splitlines()

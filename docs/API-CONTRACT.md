@@ -175,7 +175,7 @@
 ```json
 { "ok": true, "data": {
   "id": "me", "name_zh": "张三", "name_en": "SAN ZHANG",
-  "school_zh": "示例大学", "school_en": "Wuhan University",
+  "school_zh": "示例大学", "school_en": "Example University",
   "degree": "本科", "major": "管理科学（商业数据分析）", "grad_year": 2028,
   "phone": "13800000000", "email": "you@example.com",
   "city": "武汉", "available_date": null, "available_note": "2027年1月下旬",
@@ -1639,7 +1639,7 @@ EOF
 
 **这个脚本自身踩过三个坑（别再退回旧版）**：① 不抹转义竖线 → 含 `\|` 的行全部误判；② 不处理反引号内 `|` → 含正则/命令的行误判；③ **只按「表头+分隔行」切块** → 空行分隔的续行块会漏检（`IMPORT_DRAFT_PRUNED` 就这样漏了 3 版）。第 ③ 条的语义是：**Markdown 里空行不断表**，续行仍属上一张表。
 
-> 只对 `docs/*.md` 里**属于本项目的 5 份**生效；`docs/maintainers/REVIEW-CHECKLIST.md` 与 `docs/DESIGN.md` 是他人产物，脚本跳过（不替他人改文件，但要把 mismatch 报给 owner）。
+> 只对 `docs/*.md` 里**属于本项目的 5 份**生效；`docs/REVIEW-CHECKLIST.md` 与 `docs/DESIGN.md` 是他人产物，脚本跳过（不替他人改文件，但要把 mismatch 报给 owner）。
 
 ### 16.1 路由一致性（双向）
 
@@ -1656,7 +1656,7 @@ for f in api.rglob("*.py"):
         code[(m.group(1).upper(),norm(m.group(2)))]=f.name
 docset=set()
 for f in docs.glob("*.md"):
-    if f.name=="docs/maintainers/REVIEW-CHECKLIST.md": continue
+    if f.name=="REVIEW-CHECKLIST.md": continue
     txt=f.read_text(encoding="utf-8")
     for m in re.finditer(r'`(GET|POST|PUT|PATCH|DELETE) (/[^`\s]+)`',txt):
         p=m.group(2); docset.add((m.group(1),norm(p[len("/api/v1"):] if p.startswith("/api/v1") else p)))
@@ -1731,7 +1731,7 @@ cd resume-warehouse && .venv/bin/python scripts/check_route_parity.py | .venv/bi
 cd resume-warehouse && python3 - <<'EOF'
 import re,pathlib
 docs=pathlib.Path("docs"); app=pathlib.Path("server/app")
-doc_codes={m.group(1) for f in docs.glob("*.md") if f.name!="docs/maintainers/REVIEW-CHECKLIST.md"
+doc_codes={m.group(1) for f in docs.glob("*.md") if f.name!="REVIEW-CHECKLIST.md"
            for m in re.finditer(r'^\| `([A-Z][A-Z0-9_]{4,})` \|',f.read_text(encoding="utf-8"),re.M)}
 lit={m.group(1) for f in app.rglob("*.py")
      for m in re.finditer(r'"([A-Z][A-Z0-9_]{5,})"',f.read_text(encoding="utf-8"))}
@@ -1968,7 +1968,7 @@ curl -s -X POST -H 'Content-Type: application/json' \
 
 **数据修复的契约依据（防止用「按 `created_at` 推算」之类办法填假数据）**：`package.end_date` 的**唯一权威来源**是 ① 用户显式输入，或 ② 该 Package 来源 `import_job.draft_json` 中对应 entry 的 `date_range`（实测草稿里含 `date_range` 的 entry 有 **182 条**，可作恢复源）。**两者都拿不到时留 `null` 并写 `warnings`，不得猜测。**
 
-> 编号说明：`D-*` 缺陷编号的主档在 `docs/maintainers/REVIEW-CHECKLIST.md`（supervisor 产物，不在我写入范围）。本节登记 `D-35` 的契约侧与验收侧内容，登记编号由 captain/supervisor 同步。
+> 编号说明：`D-*` 缺陷编号的主档在 `docs/REVIEW-CHECKLIST.md`（supervisor 产物，不在我写入范围）。本节登记 `D-35` 的契约侧与验收侧内容，登记编号由 captain/supervisor 同步。
 
 #### 17.8.2 院校信号缺陷族（D-39 / D-41 / D-42，全部已修复，**保留为回归判据**）
 

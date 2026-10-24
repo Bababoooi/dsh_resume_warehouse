@@ -22,7 +22,7 @@ from app.services import extract, importer
         ("示例数据科技ac12ab34 - 数据实习生 2026.07 - 2026.10", True),
         ("门店模型 - 队长 2024.9-2028.6", True),
         ("2024.9 - 至今 示例大学 学习委员", True),
-        ("09/2024 – 06/2028 Wuhan University", True),
+        ("09/2024 – 06/2028 Example University", True),
     ],
 )
 def test_four_digit_marker_is_not_a_date(line, expect_entry):
